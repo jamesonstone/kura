@@ -10,34 +10,42 @@
 
 | Layer | Command | PR workflow or check | Required | Notes |
 | --- | --- | --- | --- | --- |
-| Project-specific | Document the canonical command | Document the GitHub Actions job | yes or no | Record fixtures, services, and scope |
+| Formatting | `make fmt-check` | `validate` | yes | Checks all Go source and tests without rewriting them |
+| Static analysis | `make vet` | `validate` | yes | Runs `go vet ./...` |
+| Unit and integration | `make test` | `validate` | yes | Includes the complete extracted worktree suite and isolated built-binary installation |
+| Race detection | `make test-race` | `validate` | yes | Runs the complete suite with the Go race detector |
+| Lint | `make lint` | `lint` | yes | Uses golangci-lint v2 |
+| Source size | `make source-size` | `validate` | yes | Enforces the 300-line limit across `cmd` and `internal` Go files |
+| Release | `make release-check && make snapshot` | `snapshot` | yes | Validates GoReleaser and cross-builds supported archives |
 
 ## High-Level Suites
 
 | Suite | Type | Environment | Command | Automation | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| Project-specific | end-to-end or live-integration | local or production | Document the ordered invocation | PR, post-deploy, or manual fallback | `tmp/<UTC-date>/<test>/<run-number>/` |
+| Kura installation | integration | isolated local filesystem | `go test ./internal/integration -count=1 -v` | PR `validate` job | Go test output and CI logs |
 
 ## Environment Preflights
 
-- Document exact local topology, target identity, deployed-version checks, dependencies, and timeouts
-- Document which environments are not applicable instead of creating artificial suites
+- The installation test builds the current `cmd/kura`, installs into temporary bin/man/state roots, executes the alias directly and through `git wt`, verifies the manpage, and proves an idempotent reinstall.
+- Git must be available on `PATH`; tests do not require GitHub, network access, elevated permissions, or a persistent host install.
+- Production validation is not applicable. Kura is a local CLI and release artifact, not a deployed service.
 
 ## Credentials And Test Data
 
-- List credential and secret names without values
-- Document synthetic-data naming, rate and cost limits, cleanup, and retention
+- Code-level and integration tests require no credentials or secrets.
+- Tests use language-managed temporary directories and do not retain synthetic resources.
 
 ## Evidence And Retention
 
-- Keep `tmp/` ignored and record CI artifact locations and retention
-- Keep `tests/RUN_STATUS.md` curated at meaningful validation milestones
+- Go test output and the GoReleaser snapshot remain in CI logs and workflow artifacts; local `dist/` output is ignored.
+- A production `RUN_STATUS.md` map is not applicable because Kura has no deployed environment or production suite.
 
 ## Automation And Fallbacks
 
-- Map code-level checks to pull-request jobs and high-level suites to PR or post-deployment jobs when feasible
-- Document ordered operator commands when safe automation is unavailable
+- `.github/workflows/ci.yml` runs every required pull-request check and cross-platform snapshot build.
+- `.github/workflows/release.yml` repeats release gates and publishes tag artifacts with GoReleaser.
 
 ## Known Gaps
 
-- Record partial, blocked, skipped, and unavailable validation literally
+- `git wt --help` rendering is asserted when the host provides a man viewer; the installed manpage is always compared byte-for-byte and `git wt help` always verifies Git command discovery.
+- Interactive terminal behavior is covered through a real pseudo-terminal on macOS and Linux and is skipped explicitly on unsupported hosts.

@@ -2,11 +2,16 @@
 
 ## PRINCIPLES
 
-<!-- TODO: define core principles that guide all decisions -->
+- Kura is one trusted, reviewable storehouse for host-installable developer commands.
+- The shipped binary remains useful offline: catalog metadata, scripts, compiled command behavior, and supporting manual pages are embedded release inputs.
+- Host installation preserves user agency through explicit selection, exact path reporting, conservative ownership checks, and actionable guidance instead of hidden configuration changes.
 
 ## CONSTRAINTS
 
-<!-- TODO: define invariant rules that must never be violated -->
+- Every installable tool declares its artifacts, destination classes, modes, and platform applicability in the embedded catalog.
+- Generic scripts remain data plus catalog entries. Compiled executable aliases additionally require an explicit in-binary dispatcher.
+- Installation is user-scoped by default and never fetches scripts, elevates privileges, edits shell startup files, or silently replaces unowned or locally modified destinations.
+- Selected artifacts and Kura ownership state are preflighted and committed as one rollback-capable installation transaction.
 
 ### Kit-Managed Baseline Rules
 
@@ -48,8 +53,13 @@
 
 ## NON-GOALS
 
-<!-- TODO: define what this project explicitly will not do -->
+- Acting as a remote plugin marketplace or executing code fetched at install time.
+- Managing system packages, acquiring administrator privileges, or rewriting user shell configuration.
+- Owning the runtime behavior or lifecycle of installed commands after they are launched.
 
 ## DEFINITIONS
 
-<!-- TODO: define key terms used throughout the project -->
+- **Tool**: one user-selectable catalog entry such as `git-wt`.
+- **Artifact**: one file installed for a tool, sourced from embedded content or the running Kura executable and routed to a declared destination class.
+- **Self-executable alias**: a copy of the Kura binary installed under a command-specific filename and dispatched through `argv[0]`.
+- **Ownership state**: Kura's user-local map of installed paths to tool IDs, expected modes, and content digests used for fail-closed upgrades.

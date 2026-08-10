@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "tools": [
+    {
+      "id": "git-wt",
+      "name": "git wt",
+      "description": "Safe, project-oriented Git worktree commands",
+      "artifacts": [
+        {
+          "source": "self",
+          "destination": "bin",
+          "name": "git-wt",
+          "mode": 493
+        },
+        {
+          "source": "embedded",
+          "path": "assets/man/git-wt.1",
+          "destination": "man1",
+          "name": "git-wt.1",
+          "mode": 420,
+          "platforms": ["darwin", "linux"]
+        }
+      ]
+    }
+  ]
+}
