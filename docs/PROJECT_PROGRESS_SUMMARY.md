@@ -42,7 +42,7 @@ See `docs/CONSTITUTION.md` for project-wide constraints and principles.
 - **PAUSED**: no
 - **INTENT**: Make fleet sweep visibly active during slow operations, reduce GitHub API round-trips, and add compact age and local-file context without weakening removal authority.
 - **APPROACH**: 1. Animate a TTY-only stderr status line throughout long sweep phases. 2. Deduplicate GitHub evidence by repository identity and resolve default branches plus PR pages in bounded GraphQL batches. 3. Show two-calendar-month stale annotations, compact local-file hints, consistent terminology, and counted actions without changing authority. 4. Validate terminal, batch, rendering, safety, installation, and release contracts before ready-PR delivery.
-- **OPEN ITEMS**: source-current host installation and hosted pull-request checks
+- **OPEN ITEMS**: hosted pull-request checks
 - **POINTERS**: `docs/specs/0003-sweep-progress-readability/SPEC.md`
 
 ## LAST UPDATED

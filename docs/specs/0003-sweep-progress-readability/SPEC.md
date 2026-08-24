@@ -137,8 +137,11 @@ existing proof or confirmation boundary.
   rendered the last-updated column without modifying a worktree.
 - PASS: `mandoc -T lint`, `git diff --check`, Gitleaks directory/history scans,
   and `govulncheck ./...` passed. Govulncheck found no called vulnerabilities.
-- PENDING: source-current user-local installation and hosted pull-request
-  checks run after the implementation commit.
+- PASS: `make build` installed commit `fed5872` through Kura's transactional
+  developer path. A fresh login shell resolved `/Users/jamesonstone/.local/bin/git-wt`,
+  reported Kura module provenance, displayed the sweep command, and completed
+  an isolated versioned JSON dry-run with no failures.
+- PENDING: hosted pull-request checks run after delivery.
 
 ## NOTES
 
