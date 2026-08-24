@@ -69,12 +69,21 @@ their approximate disk usage, and groups them by removal safety:
 - `PROTECTED / ACTIVE` and `UNPROVEN / NOT MERGED` are never selectable;
 - `STALE METADATA` is native Git administrative state whose path is gone.
 
-On a terminal, bare sweep prints the grouped report and offers guided actions.
+On a terminal, bare sweep shows an animated progress line while it discovers,
+queries, classifies, measures, and removes worktrees. It then prints the grouped
+report and offers guided actions with exact candidate counts. Progress uses
+stderr and is omitted from JSON and redirected output.
 Use `--interactive` or `-i` for the colorized multi-selector: arrows or `j`/`k`
 move, Space toggles, `/` filters, `s` changes sort, `e` explains, and Enter
 opens the exact removal review. A second Enter confirms the unchanged target
-snapshot. Dirty files and divergent commits are interactive-only and display
-their recovery loss before the confirmed force operation.
+snapshot. `MERGED + LOCAL FILES` and divergent commits are interactive-only and
+display their recovery loss before the confirmed force operation.
+
+Grouped and selector output show each worktree's last commit date. A `STALE`
+annotation means that date is older than two calendar months; it is an
+informational SSD-cleanup hint and never grants removal authority. Local-file
+lanes show a compact basename/path hint plus an overflow count, while the exact
+confirmation review continues to list every status entry.
 
 For unattended maintenance:
 
@@ -87,6 +96,9 @@ git wt sweep --dry-run --json
 `--auto` removes only `REMOVE READY` worktrees and exact stale metadata. It
 never deletes local files, divergent commits, or remote branches. Sweep does
 not fetch, fast-forward defaults, change remotes, or manage a scheduler.
+GitHub default-branch and pull-request evidence is deduplicated by repository
+identity and fetched in bounded multi-repository page batches; incomplete or
+failed evidence remains non-removable.
 
 On the first bare terminal run, sweep offers to create its optional config,
 asks whether to include the four built-in locations, and then repeatedly asks

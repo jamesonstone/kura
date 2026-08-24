@@ -49,7 +49,10 @@ directory is disposable build output during sync.
 Discover linked worktrees across built-in and configured roots, classify exact
 GitHub merge evidence, report approximate disk usage, and offer bounded removal
 actions. Bare terminal use prints grouped results and opens an action menu;
-redirected output is non-mutating.
+an animated stderr line identifies long-running discovery, GitHub, sizing,
+revalidation, and removal phases. Redirected and JSON output contain no
+progress frames and remain non-mutating. GitHub evidence is deduplicated by
+repository identity and requested in bounded multi-repository batches.
 .TP
 .B sweep config [--config path]
 Create or update sweep configuration interactively. The first bare terminal
@@ -205,5 +208,14 @@ forces. A human may explicitly select a GitHub-merged lane containing local
 files or commits only after reviewing its exact paths, OIDs, commits, and
 recovery loss; sweep revalidates that snapshot before its one confirmed force
 operation. Remote branches are never deleted.
+.PP
+Human output shows the last commit date and marks dates older than two calendar
+months as
+.BR STALE .
+That annotation is informational and never changes removal authority.
+Merged local-file rows include a bounded file hint; exact status entries remain
+in the confirmation review. Counted action-menu labels use the same
+.B MERGED + LOCAL FILES
+terminology as the grouped report.
 .SH SEE ALSO
 .BR git-worktree (1)

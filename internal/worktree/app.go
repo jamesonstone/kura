@@ -112,30 +112,28 @@ type PullRequestRepair struct {
 }
 
 type resolvePRFunc func(context.Context, string, string, int) (PR, error)
-type sweepDefaultResolverFunc func(context.Context, string, string) (string, error)
 
 // App implements the git-wt command.
 type App struct {
-	out                 io.Writer
-	errOut              io.Writer
-	run                 commandFunc
-	homeDir             func() (string, error)
-	getenv              func(string) string
-	readDir             func(string) ([]os.DirEntry, error)
-	mkdirAll            func(string, os.FileMode) error
-	removeAll           func(string) error
-	pathExists          func(string) (bool, error)
-	lookPath            func(string) (string, error)
-	resolvePR           resolvePRFunc
-	resolveListPRs      listPRResolverFunc
-	resolveSyncPRs      syncPRResolverFunc
-	resolveSweepPRs     syncPRResolverFunc
-	resolveSweepDefault sweepDefaultResolverFunc
-	listPRTimeout       time.Duration
-	runShell            func(context.Context, string) error
-	isTerminal          func() bool
-	selectList          listSelectorFunc
-	stdin               io.Reader
+	out               io.Writer
+	errOut            io.Writer
+	run               commandFunc
+	homeDir           func() (string, error)
+	getenv            func(string) string
+	readDir           func(string) ([]os.DirEntry, error)
+	mkdirAll          func(string, os.FileMode) error
+	removeAll         func(string) error
+	pathExists        func(string) (bool, error)
+	lookPath          func(string) (string, error)
+	resolvePR         resolvePRFunc
+	resolveListPRs    listPRResolverFunc
+	resolveSyncPRs    syncPRResolverFunc
+	resolveSweepBatch sweepEvidenceResolverFunc
+	listPRTimeout     time.Duration
+	runShell          func(context.Context, string) error
+	isTerminal        func() bool
+	selectList        listSelectorFunc
+	stdin             io.Reader
 }
 
 // NewApp creates an App backed by the local Git and GitHub CLIs.
@@ -166,8 +164,7 @@ func NewApp(out, errOut io.Writer) *App {
 	app.resolvePR = app.resolvePullRequest
 	app.resolveListPRs = app.resolveListPullRequests
 	app.resolveSyncPRs = app.resolveSyncPullRequests
-	app.resolveSweepPRs = app.resolveSweepPullRequests
-	app.resolveSweepDefault = app.sweepDefaultBranch
+	app.resolveSweepBatch = app.resolveSweepEvidenceBatch
 	app.runShell = runInteractiveShell
 	app.isTerminal, app.selectList = newListInteraction(out)
 	return app

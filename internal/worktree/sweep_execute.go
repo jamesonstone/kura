@@ -14,9 +14,26 @@ func (a *App) applySweepCandidates(
 	report *SweepReport,
 	selected []SweepCandidate,
 ) error {
+	return a.applySweepCandidatesWithProgress(ctx, cwd, config, options, report, selected, nil)
+}
+
+func (a *App) applySweepCandidatesWithProgress(
+	ctx context.Context,
+	cwd string,
+	config SweepConfig,
+	options SweepOptions,
+	report *SweepReport,
+	selected []SweepCandidate,
+	progress *sweepProgress,
+) error {
+	if len(selected) != 0 {
+		progress.start(fmt.Sprintf("Revalidating 1/%d: %s", len(selected), selected[0].Path))
+		defer progress.stopLine()
+	}
 	var failures []error
 	pruned := make(map[string]bool)
-	for _, candidate := range selected {
+	for index, candidate := range selected {
+		progress.update("Revalidating %d/%d: %s", index+1, len(selected), candidate.Path)
 		if options.Only != "" && candidate.State != options.Only {
 			continue
 		}
@@ -45,9 +62,11 @@ func (a *App) applySweepCandidates(
 			continue
 		}
 		if current.State == SweepStaleMetadata {
+			progress.update("Pruning metadata %d/%d: %s", index+1, len(selected), current.Repository)
 			err = a.pruneSweepMetadata(ctx, current)
 			pruned[current.CommonDir] = err == nil
 		} else {
+			progress.update("Removing worktree %d/%d: %s", index+1, len(selected), current.Path)
 			err = a.removeSweepWorktree(ctx, current)
 		}
 		if err != nil {
@@ -189,4 +208,25 @@ func recordSweepAction(report *SweepReport, candidate SweepCandidate, status str
 		action.Detail = err.Error()
 	}
 	report.Actions = append(report.Actions, action)
+}
+
+func summarizeSweepActions(report SweepReport) (removed, pruned, preserved int) {
+	metadata := make(map[string]bool)
+	for _, candidate := range report.Candidates {
+		if candidate.State == SweepStaleMetadata {
+			metadata[candidate.ID] = true
+		}
+	}
+	for _, action := range report.Actions {
+		if action.Status != "removed" {
+			preserved++
+			continue
+		}
+		if metadata[action.CandidateID] {
+			pruned++
+		} else {
+			removed++
+		}
+	}
+	return removed, pruned, preserved
 }

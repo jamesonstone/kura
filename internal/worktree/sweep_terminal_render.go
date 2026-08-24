@@ -53,7 +53,7 @@ func renderSweepSelectorAtSize(
 		fmt.Sprintf("Sweep (%d/%d, selected %d)  j/k/arrows move  Space toggle  / filter  s sort  e explain  Enter review  q cancel", current+1, len(candidates), countSweepSelection(selected)),
 		width,
 	)
-	header := truncateTerminalLine("    STATE                    SIZE       REPOSITORY                 BRANCH             PR     PATH", width)
+	header := truncateTerminalLine("    STATE                  SIZE     LAST UPDATED     REPOSITORY           BRANCH         PR    LOCAL FILES / PATH", width)
 	if _, err := fmt.Fprintf(output, "%s\r\n%s\r\n", sweepColorize(title, colorBold, color), sweepColorize(header, colorBold, color)); err != nil {
 		return 0, err
 	}
@@ -73,16 +73,21 @@ func renderSweepSelectorAtSize(
 		if candidate.PullRequest != nil {
 			pr = fmt.Sprintf("#%d", candidate.PullRequest.Number)
 		}
+		pathOrFiles := candidate.Path
+		if files := sweepLocalFileSummary(candidate.Status, 28); files != "" {
+			pathOrFiles = files + " | " + candidate.Path
+		}
 		line := fmt.Sprintf(
-			"%s%s %-24s %-10s %-26s %-18s %-6s %s",
+			"%s%s %-22s %-8s %-16s %-20s %-14s %-5s %s",
 			pointer,
 			mark,
 			sweepStateLabel(candidate.State),
 			humanSweepBytes(candidate.SizeBytes),
+			sweepUpdatedLabel(candidate),
 			candidate.Repository,
 			candidate.Branch,
 			pr,
-			candidate.Path,
+			pathOrFiles,
 		)
 		line = truncateTerminalLine(sanitizeTerminalField(line), width)
 		if _, err := fmt.Fprintf(output, "%s\r\n", sweepColorize(line, sweepStateColor(candidate.State), color)); err != nil {
@@ -97,7 +102,7 @@ func renderSweepSelectorAtSize(
 	lines += selectorDisplayRows(footer, width)
 	if explain && len(candidates) != 0 {
 		candidate := candidates[current]
-		detail := fmt.Sprintf("%s: %s %s", candidate.Reason, candidate.Detail, candidate.ProcessEvidence.Detail)
+		detail := fmt.Sprintf("%s: %s %s; updated=%s; local=%s", candidate.Reason, candidate.Detail, candidate.ProcessEvidence.Detail, sweepUpdatedLabel(candidate), sweepLocalFileSummary(candidate.Status, 40))
 		for _, displayLine := range strings.Split(truncateTerminalLine(detail, width), "\n") {
 			if _, err := fmt.Fprintf(output, "%s\r\n", displayLine); err != nil {
 				return 0, err

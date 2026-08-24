@@ -173,16 +173,32 @@ Sweep reports six stable states:
   missing, ambiguous, or unavailable evidence;
 - `stale-metadata`: native Git administrative state whose path is absent.
 
+Human terminal runs keep one animated stderr status line current during root
+discovery, batched GitHub evidence, classification, sizing, revalidation, and
+removal. JSON and redirected output contain no progress frames. GitHub evidence
+is deduplicated by repository identity, so multiple clones share one bounded
+GraphQL page sequence; repositories are grouped into requests and a failed
+group falls back only far enough to isolate fail-closed repository results.
+Global authentication and rate-limit failures do not fan out into retries.
+
+The grouped report and selector include the last commit date. `STALE` means the
+date is older than two calendar months relative to report generation. This is
+only a prioritization hint: it does not change a candidate's state,
+selectability, or automatic authority. Local-file candidates also show a
+sanitized bounded path summary and overflow count. Exact status lines remain in
+the destructive review.
+
 `--auto` removes only `remove-ready` and stale metadata. It never forces,
 deletes local files or divergent commits, deletes a remote branch, fetches,
 updates refs, or fast-forwards a default. Terminal users may explicitly select
-GitHub-merged dirty or divergent lanes. The review lists exact paths, local
+GitHub-merged local-file or divergent lanes. The review lists exact paths, local
 status categories, OIDs, extra commits, approximate reclaimable size, and
 recovery loss. A second Enter confirms the immutable target snapshot; any
 drift aborts and refreshes the report. Only that human-confirmed path may use
 native forced worktree removal or exact local `git branch -D`.
 
-The interactive selector uses arrows or `j`/`k`, Space, `/` filtering, `s`
+The counted action menu uses `Remove Ready` and `Merged + Local Files`
+terminology consistently with the report. The interactive selector uses arrows or `j`/`k`, Space, `/` filtering, `s`
 sorting, `e` explanation, Enter review, and a second Enter confirmation. Human
 output uses redundant state labels as well as color and honors `NO_COLOR`.
 Versioned JSON and redacted run evidence beneath the XDG state directory expose
@@ -357,7 +373,7 @@ operation failure makes the overall command exit nonzero after its complete
 human or JSON report.
 
 `git wt sweep` is the explicit fleet path. Automatic runs retain the ordinary
-non-force guardrails. Its separate terminal-confirmed dirty and local-history
+non-force guardrails. Its separate terminal-confirmed local-file and local-history
 actions are hard-delete operations: coding agents and unattended automation
 must not invoke those actions, and the selected human target snapshot must be
 revalidated before execution.

@@ -23,11 +23,25 @@ func configureSweepEvidence(
 	fixture gitFixture,
 	prs map[string][]SyncPullRequest,
 ) {
-	fixture.app.resolveSweepDefault = func(context.Context, string, string) (string, error) {
-		return "main", nil
-	}
 	fixture.app.resolveSyncPRs = staticSyncPRs(prs)
-	fixture.app.resolveSweepPRs = staticSyncPRs(prs)
+	fixture.app.resolveSweepBatch = func(
+		_ context.Context,
+		requests []sweepEvidenceRequest,
+		_ time.Duration,
+		_ *sweepProgress,
+	) map[string]sweepResolvedEvidence {
+		resolved := make(map[string]sweepResolvedEvidence, len(requests))
+		for _, request := range requests {
+			byBranch := make(map[string][]SyncPullRequest, len(request.branches))
+			for _, branch := range request.branches {
+				byBranch[branch] = append([]SyncPullRequest(nil), prs[branch]...)
+			}
+			resolved[request.identity] = sweepResolvedEvidence{
+				identity: request.identity, defaultBranch: "main", pullRequests: byBranch,
+			}
+		}
+		return resolved
+	}
 }
 
 func buildSweepTestReport(

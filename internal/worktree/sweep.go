@@ -30,13 +30,14 @@ func (a *App) sweep(ctx context.Context, cwd string, args []string) error {
 	if err != nil {
 		return err
 	}
-	report := a.buildSweepReport(ctx, cwd, config, options)
+	progress := newSweepProgress(a.errOut, a.isTerminal() && !options.JSON)
+	report := a.buildSweepReportWithProgress(ctx, cwd, config, options, progress)
 	failuresBeforeAction := len(report.Failures)
 	if options.Explain != "" {
 		err = writeSweepExplanation(a.out, report, options.Explain, sweepUseColor(a, options))
 	} else if options.Auto {
 		if err = persistSweepReview(config.StateRoot, report); err == nil {
-			err = a.applySweepCandidates(ctx, cwd, config, options, &report, automaticSweepCandidates(report.Candidates))
+			err = a.applySweepCandidatesWithProgress(ctx, cwd, config, options, &report, automaticSweepCandidates(report.Candidates), progress)
 		}
 	} else if options.Interactive || a.isTerminal() && !options.JSON && !options.DryRun {
 		err = a.runSweepTerminal(ctx, cwd, config, options, &report)
@@ -88,6 +89,18 @@ func (a *App) buildSweepReport(
 	config SweepConfig,
 	options SweepOptions,
 ) SweepReport {
+	return a.buildSweepReportWithProgress(ctx, cwd, config, options, nil)
+}
+
+func (a *App) buildSweepReportWithProgress(
+	ctx context.Context,
+	cwd string,
+	config SweepConfig,
+	options SweepOptions,
+	progress *sweepProgress,
+) SweepReport {
+	progress.start("Inspecting active worktree processes")
+	defer progress.stopLine()
 	now := time.Now().UTC()
 	a.populateSweepProcessSnapshot(ctx, &config)
 	report := SweepReport{
@@ -101,10 +114,13 @@ func (a *App) buildSweepReport(
 		Failures:      make([]SweepFailure, 0),
 		Actions:       make([]SweepAction, 0),
 	}
+	progress.update("Discovering worktrees across %d configured root(s)", len(config.Roots)+len(config.ProjectRoots))
 	repositories, failures := a.discoverSweepRepositories(ctx, config)
 	report.Failures = append(report.Failures, failures...)
-	a.classifySweepRepositories(ctx, cwd, config, repositories, &report)
+	progress.update("Collecting GitHub evidence for %d repository clone(s)", len(repositories))
+	a.classifySweepRepositories(ctx, cwd, config, repositories, &report, now, progress)
 	if config.Sizes {
+		progress.update("Measuring disk usage for %d worktree(s)", len(report.Candidates))
 		populateSweepSizes(ctx, report.Candidates, config.SizeJobs)
 	}
 	for index := range report.Candidates {
