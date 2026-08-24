@@ -51,6 +51,14 @@ GitHub merge evidence, report approximate disk usage, and offer bounded removal
 actions. Bare terminal use prints grouped results and opens an action menu;
 redirected output is non-mutating.
 .TP
+.B sweep config [--config path]
+Create or update sweep configuration interactively. The first bare terminal
+sweep offers the same wizard when the default config is absent. The wizard can
+toggle built-ins, add or remove typed roots, preserve comments, display the
+complete old/new YAML, retain one backup, and atomically write after final
+confirmation. Operational automation, JSON, dry-run, and redirected runs never
+prompt or create configuration.
+.TP
 .B home
 Open a shell in this clone's primary worktree.
 .TP

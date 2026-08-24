@@ -145,6 +145,21 @@ and the Git-discoverable `git-wt` alias plus its manual page.
   into user-local destinations, then prove `git wt sweep` resolves immediately.
 - REQ-025: Keep every handwritten Go source and test file at or below 300
   physical lines and preserve macOS, Linux, and Windows builds.
+- REQ-026: When the default config is absent, bare terminal sweep offers a
+  first-run wizard before discovery. It asks whether to create configuration,
+  whether to include built-ins, and then repeatedly whether to add another
+  typed worktree-pool, project-root, or exclusion path. Saving continues the
+  same sweep; declining uses in-memory defaults for that invocation.
+- REQ-027: Add `git wt sweep config [--config <path>]` as the supported
+  interactive create/update surface. Existing files can toggle built-ins, add
+  or remove typed paths, and review the full old/new YAML before final write.
+  Operational `--config <missing>` remains an error.
+- REQ-028: Automation, JSON, explicit dry-run, and non-TTY runs never prompt or
+  create configuration. Config creation/update preserves YAML comments,
+  ordering, and unrelated supported fields; accepts missing future directories
+  with warnings; rejects invalid, unknown, unsafe, non-regular, or symlink
+  targets; writes mode 0600 below a created mode-0700 directory; retains one
+  mode-0600 backup; and uses platform-native atomic replacement.
 
 ### Non-goals
 
@@ -177,6 +192,11 @@ and the Git-discoverable `git-wt` alias plus its manual page.
   resolves `git wt sweep` immediately, including the updated manual page.
 - AC-008: Formatting, vet, full tests, race tests, lint, source-size, release
   check, snapshot, integration installation, diff, secret, and docs review pass.
+- AC-009: Tests prove first-run save/decline and continuation, all typed path
+  categories, empty configuration, missing-path warnings, existing
+  add/remove/toggle/cancel, comments and non-root settings, old/new diff,
+  backup/modes, atomic cleanup, custom config creation, TTY enforcement, and
+  zero prompts/writes from non-interactive operational modes.
 
 ## ACCEPTED PLAN
 
@@ -192,6 +212,9 @@ and the Git-discoverable `git-wt` alias plus its manual page.
 9. Restore a source-current Makefile install workflow for `kura`, `git-wt`, and
    the manpage and prove immediate Git command discovery.
 10. Validate end to end, curate repository memory, and deliver the ready GH-5 PR.
+11. Add the first-run and `sweep config` interactive lifecycle with
+    comment-preserving YAML mutation, typed paths, reviewed backup/atomic
+    writes, and strict non-interactive separation; rerun delivery validation.
 
 ## DECISIONS
 
@@ -212,6 +235,15 @@ and the Git-discoverable `git-wt` alias plus its manual page.
 - The installed alias must be built from the same current Kura source as the
   developer binary so `make` validation cannot accidentally exercise Kit's
   stale host copy.
+- Missing default configuration is convenience state, not an automation gate.
+  Only a bare TTY offers setup; every scripted surface stays non-interactive and
+  keeps the established in-memory default behavior.
+- The wizard records built-in inclusion as one boolean and additional paths by
+  explicit semantic type. It never guesses from current contents, so future
+  missing roots and project-local Claude discovery remain stable.
+- Existing user-authored YAML is persistent configuration: supported updates
+  preserve comments and field order, present the complete diff, retain one
+  backup, and fail closed rather than repairing invalid or symlink files.
 
 ## DISCOVERIES
 
@@ -246,6 +278,14 @@ and the Git-discoverable `git-wt` alias plus its manual page.
   unavailable GitHub repositories remained explicit fail-closed findings.
 - macOS exposes temporary paths through both `/var` and `/private/var`; config,
   containment, discovery, and tests compare physical path identity.
+- The original PR loaded optional YAML but never created it; the host's default
+  config path was absent. The follow-up adds one shared wizard for first-run and
+  explicit later configuration without changing operational defaults.
+- Reading prompts one byte at a time avoids buffered read-ahead consuming the
+  subsequent sweep menu when first-run setup and sweep continue in one process.
+- YAML node mutation reuses retained sequence-item nodes so file, value, and
+  per-path comments survive root-list updates. Windows uses replace-existing,
+  write-through file replacement while Unix uses ordinary atomic rename.
 
 ## VALIDATION
 
@@ -272,11 +312,28 @@ and the Git-discoverable `git-wt` alias plus its manual page.
   validation, Gitleaks directory/history scans, and `govulncheck ./...` passed.
   Govulncheck reported no called vulnerabilities; imported/module advisories
   do not affect called code.
+- PASS: the configuration follow-up reran `make check` and `make test-race`;
+  the worktree package passed in 69.580 and 75.825 seconds. Lint reported zero
+  findings, Windows test/binary cross-builds passed, and GoReleaser remained
+  valid across all six snapshot targets.
+- PASS: focused tests cover first-run create/decline/continue, default opt-in
+  and empty opt-out, worktree/project/exclusion path types, deduplication,
+  missing-path warnings, invalid-input recovery, existing add/remove/toggle/
+  cancel, comment and non-root-setting preservation, old/new line diff,
+  mode-0600 backup/config, mode-0700 parent creation, atomic cleanup, strict
+  version/unknown/symlink refusal, explicit custom config, and non-TTY/
+  automation no-write behavior.
+- PASS: real `expect`-driven PTY smoke tests created an isolated config through
+  synchronized prompts and proved first-run save reloads configuration,
+  continues to the grouped sweep menu, accepts quit, and persists one report.
+- PASS: PR #6 head `a946d7a` was ready and `CLEAN` with Validate, Lint,
+  GoReleaser snapshot, and maintainer-assignment checks passing before the
+  configuration follow-up.
 - BASELINE DEBT: `kit check --project` retains unrelated stale managed
   instruction findings that predate issue #5. Both feature specs pass
   `kit check --all`; the new feature-local checks are clean.
-- PENDING EXTERNAL: hosted checks cannot be observed until GH-5 is pushed and
-  the ready pull request exists.
+- PENDING EXTERNAL: hosted checks for the configuration follow-up cannot be
+  observed until its validated commit is pushed to the existing ready PR #6.
 
 ## OUTCOME
 
@@ -294,6 +351,10 @@ and the Git-discoverable `git-wt` alias plus its manual page.
 - Added strict versioned YAML, built-in and configured roots, nested Claude
   discovery, exclusions, best-effort process policy, GitHub/size bounds, and
   the full documented flag surface.
+- Added TTY-only first-run configuration and `git wt sweep config`, including
+  default opt-in/out, repeatable typed paths, existing add/remove/toggle/cancel,
+  missing-path warnings, comment-preserving old/new review, one backup, atomic
+  replacement, strict invalid/symlink refusal, and immediate post-save reload.
 - Restored source-current Makefile installation: `make build` refreshes the
   transactional Kura-owned `git-wt` alias and manpage; `make install` also
   installs `kura`. The resulting `git wt sweep` is immediately testable.

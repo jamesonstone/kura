@@ -35,6 +35,7 @@ Commands:
   list [flags]                     List this clone's worktrees without pruning (default)
   sync [--dry-run] [--json]       Reconcile origin and proven merged worktree lanes
   sweep [flags]                    Discover and clean merged lanes across configured roots
+  sweep config [--config <path>]  Create or update sweep configuration interactively
   home                             Open a shell in this clone's primary worktree
   root                             Print the canonical linked-worktree directory
   path <lane>                      Print an exact registered lane path for shell navigation

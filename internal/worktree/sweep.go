@@ -14,9 +14,17 @@ func (err sweepRunError) Error() string {
 }
 
 func (a *App) sweep(ctx context.Context, cwd string, args []string) error {
+	if len(args) != 0 && args[0] == "config" {
+		return a.runSweepConfigCommand(ctx, args[1:])
+	}
 	options, err := parseSweepOptions(args)
 	if err != nil {
 		return err
+	}
+	if len(args) == 0 {
+		if err := a.offerFirstSweepConfig(); err != nil {
+			return err
+		}
 	}
 	config, err := a.loadSweepConfig(options)
 	if err != nil {

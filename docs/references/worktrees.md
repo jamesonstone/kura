@@ -144,6 +144,22 @@ the entire home directory. Marker paths, physical containment, exact Git
 registration, primary identity, repository identity, and common-directory
 ownership must all agree before classification.
 
+When that default file is absent, bare terminal `git wt sweep` offers a
+first-run wizard before discovery. It asks whether to create configuration,
+whether to enable built-ins, and finally whether to add more typed paths.
+Saving reloads the new config and continues the same sweep. Declining runs once
+with in-memory defaults. Non-terminal, `--auto`, `--json`, and explicit
+`--dry-run` invocations never prompt or write.
+
+Use `git wt sweep config` to create or reopen the default config, or append
+`--config <path>` to manage a custom one. Existing configuration can toggle
+built-ins and add or remove worktree-pool, project-root, and exclusion entries.
+The wizard preserves comments and unrelated supported fields, displays the
+complete old/new YAML, retains one `0600` backup, and atomically replaces the
+confirmed `0600` file beneath a `0700` directory. Missing future directories
+produce a warning; invalid, unknown, unsafe, or symlink configuration fails
+closed.
+
 Sweep reports six stable states:
 
 - `remove-ready`: one same-repository PR merged into the current GitHub default

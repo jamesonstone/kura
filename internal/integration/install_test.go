@@ -36,8 +36,13 @@ func TestBuiltKuraInstallsGitWorktreeForGitDiscovery(t *testing.T) {
 	alias := filepath.Join(binDir, aliasName)
 	helpOutput := run(t, root, nil, alias, "help")
 	if !strings.Contains(helpOutput, "Usage: git wt") || !strings.Contains(helpOutput, "sync --dry-run") ||
-		!strings.Contains(helpOutput, "sweep [flags]") {
+		!strings.Contains(helpOutput, "sweep [flags]") || !strings.Contains(helpOutput, "sweep config") {
 		t.Fatalf("alias help output = %q", helpOutput)
+	}
+	configCommand := exec.Command(alias, "sweep", "config", "--config", filepath.Join(temporary, "interactive.yaml"))
+	configCommand.Dir = root
+	if configOutput, configErr := configCommand.CombinedOutput(); configErr == nil || !strings.Contains(string(configOutput), "requires terminal") {
+		t.Fatalf("non-TTY config result: error=%v output=%q", configErr, configOutput)
 	}
 	moduleOutput := run(t, root, nil, "go", "version", "-m", alias)
 	if !strings.Contains(moduleOutput, "github.com/jamesonstone/kura") {

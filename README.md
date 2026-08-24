@@ -88,7 +88,32 @@ git wt sweep --dry-run --json
 never deletes local files, divergent commits, or remote branches. Sweep does
 not fetch, fast-forward defaults, change remotes, or manage a scheduler.
 
-The optional config is `$XDG_CONFIG_HOME/kura/git-wt.yaml`, or
+On the first bare terminal run, sweep offers to create its optional config,
+asks whether to include the four built-in locations, and then repeatedly asks
+whether to add another typed path. Additional paths are recorded as worktree
+pools, project roots for nested `.claude/worktrees`, or excluded subtrees. The
+wizard reviews the proposed YAML and asks once more before writing, then
+continues directly into sweep.
+
+```sh
+git wt sweep
+git wt sweep config
+git wt sweep config --config "$HOME/custom/git-wt.yaml"
+```
+
+`git wt sweep config` reopens an existing file and can toggle built-ins, add or
+remove typed paths, and show the complete old/new diff. Updates preserve YAML
+comments and unrelated supported settings, retain one mode-`0600` `.bak`, and
+replace the mode-`0600` config atomically beneath a mode-`0700` directory.
+Missing future directories are accepted with a warning. Invalid YAML, unknown
+fields, unsafe paths, and symlink config files fail closed.
+
+Automation, JSON, explicit dry-run, and redirected invocations never prompt or
+create configuration. They continue using in-memory built-ins when the default
+file is missing. An explicitly missing operational `--config` remains an
+error; use the `sweep config --config` command to create it intentionally.
+
+The config path is `$XDG_CONFIG_HOME/kura/git-wt.yaml`, or
 `~/.config/kura/git-wt.yaml` when XDG config is unset:
 
 ```yaml

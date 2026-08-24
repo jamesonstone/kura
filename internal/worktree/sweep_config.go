@@ -1,16 +1,11 @@
 package worktree
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
-
-	"gopkg.in/yaml.v3"
 )
 
 type sweepYAML struct {
@@ -31,40 +26,18 @@ type sweepYAML struct {
 }
 
 func (a *App) loadSweepConfig(options SweepOptions) (SweepConfig, error) {
-	home, err := a.homeDir()
-	if err != nil {
-		return SweepConfig{}, fmt.Errorf("determine home directory: %w", err)
-	}
-	configPath := strings.TrimSpace(options.ConfigPath)
-	if configPath == "" {
-		configHome := strings.TrimSpace(a.getenv("XDG_CONFIG_HOME"))
-		if configHome == "" {
-			configHome = filepath.Join(home, ".config")
-		}
-		configPath = filepath.Join(configHome, "kura", "git-wt.yaml")
-	}
-	configPath, err = expandSweepPath(home, configPath)
+	home, configPath, err := a.resolveSweepConfigPath(options.ConfigPath)
 	if err != nil {
 		return SweepConfig{}, err
 	}
-	raw := sweepYAML{}
-	includeBuiltins := true
-	raw.Sweep.IncludeBuiltinRoots = &includeBuiltins
-	sizes := true
-	raw.Sweep.Sizes.Enabled = &sizes
-	contents, readErr := os.ReadFile(configPath)
-	if readErr == nil {
-		decoder := yaml.NewDecoder(bytes.NewReader(contents))
-		decoder.KnownFields(true)
-		if err := decoder.Decode(&raw); err != nil {
-			return SweepConfig{}, fmt.Errorf("decode sweep config %s: %w", configPath, err)
-		}
-		if raw.Version != 1 {
-			return SweepConfig{}, fmt.Errorf("sweep config version must be 1")
-		}
-	} else if !errors.Is(readErr, os.ErrNotExist) || options.ConfigPath != "" {
-		return SweepConfig{}, fmt.Errorf("read sweep config %s: %w", configPath, readErr)
+	document, err := readSweepConfigDocument(configPath)
+	if err != nil {
+		return SweepConfig{}, err
 	}
+	if !document.exists && options.ConfigPath != "" {
+		return SweepConfig{}, fmt.Errorf("read sweep config %s: file does not exist", configPath)
+	}
+	raw := document.raw
 	config := SweepConfig{
 		ConfigPath: configPath, ProcessCheck: "best_effort", Jobs: options.Jobs,
 		Timeout: options.Timeout, Sizes: !options.NoSizes, SizeJobs: options.Jobs,
