@@ -79,6 +79,12 @@ opens the exact removal review. A second Enter confirms the unchanged target
 snapshot. `MERGED + LOCAL FILES` and divergent commits are interactive-only and
 display their recovery loss before the confirmed force operation.
 
+After confirmation, sweep revalidates the complete selected set with one
+size-free fleet refresh instead of rebuilding the fleet once per worktree. It
+then refreshes process evidence once and immediately rechecks each target's
+exact registration, branch, head, and local-status fingerprint before removal.
+One drifted target is preserved without weakening independent safe targets.
+
 Grouped and selector output show each worktree's last commit date. A `STALE`
 annotation means that date is older than two calendar months; it is an
 informational SSD-cleanup hint and never grants removal authority. Local-file
