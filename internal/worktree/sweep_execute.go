@@ -26,47 +26,60 @@ func (a *App) applySweepCandidatesWithProgress(
 	selected []SweepCandidate,
 	progress *sweepProgress,
 ) error {
-	if len(selected) != 0 {
-		progress.start(fmt.Sprintf("Revalidating 1/%d: %s", len(selected), selected[0].Path))
-		defer progress.stopLine()
+	targets := make([]SweepCandidate, 0, len(selected))
+	for _, candidate := range selected {
+		if options.Only == "" || candidate.State == options.Only {
+			targets = append(targets, candidate)
+		}
 	}
+	if len(targets) == 0 {
+		return nil
+	}
+	progress.start(fmt.Sprintf("Revalidating %d selected target(s) in one fleet refresh", len(targets)))
+	defer progress.stopLine()
 	var failures []error
-	pruned := make(map[string]bool)
-	for index, candidate := range selected {
-		progress.update("Revalidating %d/%d: %s", index+1, len(selected), candidate.Path)
-		if options.Only != "" && candidate.State != options.Only {
-			continue
-		}
-		if candidate.State == SweepStaleMetadata && pruned[candidate.CommonDir] {
-			continue
-		}
-		current, err := a.refreshSweepCandidate(ctx, cwd, config, options, candidate.ID)
-		if err != nil {
-			actionErr := fmt.Errorf("revalidate %s: %w", candidate.Path, err)
-			recordSweepAction(report, candidate, "preserved", actionErr)
-			report.addFailure("revalidate-candidate", candidate.Repository, candidate.Path, actionErr)
-			failures = append(failures, actionErr)
+	refreshed := a.refreshSweepCandidates(ctx, cwd, config, options)
+	approved := make([]SweepCandidate, 0, len(targets))
+	for _, candidate := range targets {
+		current, ok := refreshed[candidate.ID]
+		if !ok {
+			err := fmt.Errorf("revalidate %s: candidate is no longer present", candidate.Path)
+			recordSweepPreservation(report, &failures, candidate, "revalidate-candidate", err)
 			continue
 		}
 		if current.Snapshot != candidate.Snapshot || current.State != candidate.State {
-			actionErr := fmt.Errorf("candidate changed after review; refresh required")
-			recordSweepAction(report, candidate, "preserved", actionErr)
-			report.addFailure("candidate-drift", candidate.Repository, candidate.Path, actionErr)
-			failures = append(failures, actionErr)
+			err := fmt.Errorf("candidate changed after review; refresh required")
+			recordSweepPreservation(report, &failures, candidate, "candidate-drift", err)
 			continue
 		}
 		if err := validateSweepAuthority(current, options.Auto); err != nil {
-			recordSweepAction(report, current, "preserved", err)
-			report.addFailure("candidate-authority", current.Repository, current.Path, err)
-			failures = append(failures, err)
+			recordSweepPreservation(report, &failures, current, "candidate-authority", err)
 			continue
 		}
+		approved = append(approved, current)
+	}
+	progress.update("Refreshing process evidence for %d unchanged target(s)", len(approved))
+	processFailures := a.revalidateSweepProcesses(ctx, config, approved)
+	ready := make([]SweepCandidate, 0, len(approved))
+	for _, candidate := range approved {
+		if err := processFailures[candidate.ID]; err != nil {
+			recordSweepPreservation(report, &failures, candidate, "candidate-process-drift", err)
+			continue
+		}
+		ready = append(ready, candidate)
+	}
+	pruned := make(map[string]bool)
+	for index, current := range ready {
+		if current.State == SweepStaleMetadata && pruned[current.CommonDir] {
+			continue
+		}
+		var err error
 		if current.State == SweepStaleMetadata {
-			progress.update("Pruning metadata %d/%d: %s", index+1, len(selected), current.Repository)
+			progress.update("Pruning metadata %d/%d: %s", index+1, len(ready), current.Repository)
 			err = a.pruneSweepMetadata(ctx, current)
 			pruned[current.CommonDir] = err == nil
 		} else {
-			progress.update("Removing worktree %d/%d: %s", index+1, len(selected), current.Path)
+			progress.update("Removing worktree %d/%d: %s", index+1, len(ready), current.Path)
 			err = a.removeSweepWorktree(ctx, current)
 		}
 		if err != nil {
@@ -78,28 +91,6 @@ func (a *App) applySweepCandidatesWithProgress(
 		recordSweepAction(report, current, "removed", nil)
 	}
 	return errors.Join(failures...)
-}
-
-func (a *App) refreshSweepCandidate(
-	ctx context.Context,
-	cwd string,
-	config SweepConfig,
-	options SweepOptions,
-	id string,
-) (SweepCandidate, error) {
-	refreshConfig := config
-	refreshConfig.Sizes = false
-	refreshOptions := options
-	refreshOptions.NoSizes = true
-	refreshOptions.Auto = false
-	refreshOptions.Interactive = false
-	report := a.buildSweepReport(ctx, cwd, refreshConfig, refreshOptions)
-	for _, candidate := range report.Candidates {
-		if candidate.ID == id {
-			return candidate, nil
-		}
-	}
-	return SweepCandidate{}, fmt.Errorf("candidate is no longer present")
 }
 
 func validateSweepAuthority(candidate SweepCandidate, automatic bool) error {
@@ -136,6 +127,13 @@ func (a *App) removeSweepWorktree(ctx context.Context, candidate SweepCandidate)
 	}
 	if entry.branch != candidate.Branch || entry.head != candidate.HeadOID {
 		return fmt.Errorf("registered branch or head changed after confirmation")
+	}
+	status, err := a.inspectSweepStatus(ctx, candidate.PrimaryPath, candidate.Path)
+	if err != nil {
+		return fmt.Errorf("reinspect local status before removal: %w", err)
+	}
+	if status.Fingerprint != candidate.Status.Fingerprint {
+		return fmt.Errorf("local status changed after fleet revalidation; refresh required")
 	}
 	if candidate.ForceBranch {
 		return a.removeSweepDivergentBranch(ctx, repo, *entry, candidate)

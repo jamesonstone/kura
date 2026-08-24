@@ -197,6 +197,13 @@ recovery loss. A second Enter confirms the immutable target snapshot; any
 drift aborts and refreshes the report. Only that human-confirmed path may use
 native forced worktree removal or exact local `git branch -D`.
 
+Apply-time revalidation is set-wide rather than candidate-multiplied: one
+size-free fleet report indexes every selected candidate by stable ID before any
+mutation. Sweep then takes one fresh process snapshot and, immediately before
+each worktree removal, rechecks exact registration, branch, head OID, and local
+status fingerprint. Missing or drifted targets are preserved independently;
+fleet discovery and GitHub evidence are never repeated once per selection.
+
 The counted action menu uses `Remove Ready` and `Merged + Local Files`
 terminology consistently with the report. The interactive selector uses arrows or `j`/`k`, Space, `/` filtering, `s`
 sorting, `e` explanation, Enter review, and a second Enter confirmation. Human
