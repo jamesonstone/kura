@@ -35,14 +35,32 @@ func TestBuiltKuraInstallsGitWorktreeForGitDiscovery(t *testing.T) {
 	}
 	alias := filepath.Join(binDir, aliasName)
 	helpOutput := run(t, root, nil, alias, "help")
-	if !strings.Contains(helpOutput, "Usage: git wt") || !strings.Contains(helpOutput, "sync --dry-run") {
+	if !strings.Contains(helpOutput, "Usage: git wt") || !strings.Contains(helpOutput, "sync --dry-run") ||
+		!strings.Contains(helpOutput, "sweep [flags]") {
 		t.Fatalf("alias help output = %q", helpOutput)
+	}
+	moduleOutput := run(t, root, nil, "go", "version", "-m", alias)
+	if !strings.Contains(moduleOutput, "github.com/jamesonstone/kura") {
+		t.Fatalf("installed alias module provenance = %q", moduleOutput)
 	}
 
 	gitPath := binDir + string(os.PathListSeparator) + os.Getenv("PATH")
 	gitOutput := run(t, root, []string{"PATH=" + gitPath}, "git", "wt", "help")
 	if !strings.Contains(gitOutput, "Usage: git wt") {
 		t.Fatalf("git discovery output = %q", gitOutput)
+	}
+	emptyRoot := filepath.Join(temporary, "empty-worktrees")
+	if err := os.MkdirAll(emptyRoot, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	sweepOutput := run(t, root, []string{
+		"PATH=" + gitPath,
+		"HOME=" + filepath.Join(temporary, "home"),
+		"XDG_CONFIG_HOME=" + filepath.Join(temporary, "config"),
+		"XDG_STATE_HOME=" + filepath.Join(temporary, "sweep-state"),
+	}, "git", "wt", "sweep", "--dry-run", "--json", "--root", emptyRoot, "--no-sizes")
+	if !strings.Contains(sweepOutput, `"schema_version": 1`) || !strings.Contains(sweepOutput, `"result": "report"`) {
+		t.Fatalf("installed sweep output = %q", sweepOutput)
 	}
 	if runtime.GOOS != "windows" {
 		installedManpage, err := os.ReadFile(filepath.Join(manDir, "git-wt.1"))

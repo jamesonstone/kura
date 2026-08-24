@@ -27,6 +27,8 @@
 ## Environment Preflights
 
 - The installation test builds the current `cmd/kura`, installs into temporary bin/man/state roots, executes the alias directly and through `git wt`, verifies the manpage, and proves an idempotent reinstall.
+- Sweep tests use temporary real Git clones and linked worktrees plus injected GitHub evidence to prove bounded discovery, common-directory deduplication, every classification, immutable drift checks, automatic non-force removal, confirmed dirty/history removal, local branch lifecycle, stale metadata, deterministic JSON/human output, and selector controls without touching host worktrees.
+- The developer-install smoke test must prove that the Makefile-installed `git-wt` reports Kura module provenance and that a fresh shell resolves `git wt sweep` immediately.
 - Git must be available on `PATH`; tests do not require GitHub, network access, elevated permissions, or a persistent host install.
 - Production validation is not applicable. Kura is a local CLI and release artifact, not a deployed service.
 
