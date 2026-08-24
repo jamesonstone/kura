@@ -2,7 +2,7 @@
 kit_metadata_version: 1
 artifact: "spec"
 workflow_version: 3
-phase: "validation"
+phase: "complete"
 feature:
   id: "0004"
   slug: "sweep-batched-revalidation"
@@ -133,9 +133,13 @@ preserving the exact confirmation and immediate local safety boundary.
   developer path. A fresh login shell resolved `/Users/jamesonstone/.local/bin/git-wt`,
   reported Kura module provenance and exact version ldflags, and completed an
   isolated versioned JSON dry-run against only the GH-9 lane with no failures.
-- PENDING: hosted pull-request validation runs after delivery.
+- PASS: PR #10 implementation head `9691d64` was ready, `MERGEABLE`, and
+  `CLEAN`; maintainer assignment, Validate, Lint, and GoReleaser snapshot checks
+  all completed successfully with no review comments or change requests.
 
 ## NOTES
 
 - 2026-08-24: Implementation started in issue #9 and worklane `GH-9` from
   merged feature 0003 on `origin/main`.
+- 2026-08-24: PR #10 delivered ready for review after local, race, security,
+  release, installation, and hosted validation passed.
