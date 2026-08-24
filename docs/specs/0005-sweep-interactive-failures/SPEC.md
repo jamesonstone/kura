@@ -205,7 +205,10 @@ explicit bulk retirement of age-stale worktrees with recovery refs preserved.
   report showed 33/33 stale targets selectable and bulk-delete eligible.
 - PASS: an expect-driven real PTY selected three distinct stale rows with Space,
   observed `selected 3`, and cancelled before review without any removal.
-- PENDING: rerun hosted PR validation on the approved head.
+- PASS: after PR #12 was squash-merged externally, the same GH-11 worklane was
+  semantically reconciled with merged `main`. Post-reconciliation `make check`
+  passed in 87.168 seconds and `make test-race` passed in 96.569 seconds.
+- PENDING: hosted validation for follow-up PR #14.
 
 ## NOTES
 
@@ -219,3 +222,6 @@ explicit bulk retirement of age-stale worktrees with recovery refs preserved.
   installation, real-PTY, and hosted validation.
 - 2026-08-24: User approved interactive retirement of STALE unproven worktrees
   with branch preservation and required a path-qualified multi-selection fix.
+- 2026-08-24: PR #12 merged before the approved follow-up completed; issue #11
+  was reopened and the same GH-11 lane delivered only the follow-up tree diff
+  through PR #14 after semantic squash-base reconciliation.
