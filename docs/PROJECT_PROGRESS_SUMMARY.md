@@ -52,7 +52,7 @@ See `docs/CONSTITUTION.md` for project-wide constraints and principles.
 - **PAUSED**: no
 - **INTENT**: Replace per-candidate fleet refreshes with one selected-set revalidation plus immediate target-local safety checks.
 - **APPROACH**: 1. Build and index one size-free report after confirmation. 2. Preserve missing, drifted, or unauthorized candidates independently before mutation. 3. Refresh process evidence once, then recheck exact registration, branch, head, and local status per target. 4. Prove the fleet evidence resolver runs once for multi-target apply and retain every existing removal guardrail. 5. Validate and deliver issue #9 from `GH-9` as a ready PR.
-- **OPEN ITEMS**: source-current host installation and hosted pull-request validation
+- **OPEN ITEMS**: hosted pull-request validation
 - **POINTERS**: `docs/specs/0004-sweep-batched-revalidation/SPEC.md`
 
 ## LAST UPDATED

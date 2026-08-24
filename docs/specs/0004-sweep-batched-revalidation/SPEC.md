@@ -129,8 +129,11 @@ preserving the exact confirmation and immediate local safety boundary.
   GoReleaser configuration and `make snapshot` built all six release archives.
 - PASS: `mandoc -T lint`, `git diff --check`, Gitleaks directory/history scans,
   and `govulncheck ./...` passed. Govulncheck found no called vulnerabilities.
-- PENDING: source-current user-local installation and hosted pull-request
-  validation run after the implementation commit.
+- PASS: `make build` installed commit `37e5399` through Kura's transactional
+  developer path. A fresh login shell resolved `/Users/jamesonstone/.local/bin/git-wt`,
+  reported Kura module provenance and exact version ldflags, and completed an
+  isolated versioned JSON dry-run against only the GH-9 lane with no failures.
+- PENDING: hosted pull-request validation runs after delivery.
 
 ## NOTES
 
