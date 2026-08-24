@@ -2,7 +2,7 @@
 kit_metadata_version: 1
 artifact: "spec"
 workflow_version: 3
-phase: "validation"
+phase: "complete"
 feature:
   id: "0003"
   slug: "sweep-progress-readability"
@@ -141,8 +141,12 @@ existing proof or confirmation boundary.
   developer path. A fresh login shell resolved `/Users/jamesonstone/.local/bin/git-wt`,
   reported Kura module provenance, displayed the sweep command, and completed
   an isolated versioned JSON dry-run with no failures.
-- PENDING: hosted pull-request checks run after delivery.
+- PASS: PR #8 implementation head `b0fd62f` was ready, `MERGEABLE`, and `CLEAN`; maintainer
+  assignment, Validate, Lint, and GoReleaser snapshot checks all completed
+  successfully with no review comments or change requests.
 
 ## NOTES
 
 - 2026-08-24: Implementation started in issue #7 and worklane `GH-7`.
+- 2026-08-24: PR #8 delivered ready for review after local, installation, live
+  GitHub/PTY, security, release, and hosted validation passed.

@@ -6,7 +6,7 @@
 | -- | ------- | ---- | ----- | ------ | ------- | ------- |
 | 0001 | interactive-script-installer | `docs/specs/0001-interactive-script-installer` | complete | no | 2026-08-10 | Make Kura a distributable storehouse of host-installable commands. Running the `kura` binary opens a terminal multi-select where Space toggles tools and Enter installs every selected tool to its declared host destination. The first catalog entry extracts Kit's current `git wt` behavior and installs it as the Git-discoverable `git-wt` command with its manual page. |
 | 0002 | worktree-sweep | `docs/specs/0002-worktree-sweep` | complete | no | 2026-08-24 | Add one fleet-wide `git wt sweep` command that discovers linked Git worktrees across bounded user and provider roots, proves GitHub merge state, reports disk usage and safety classifications, and removes only the exact worktrees selected through the authority appropriate to their risk. |
-| 0003 | sweep-progress-readability | `docs/specs/0003-sweep-progress-readability` | validation | no | 2026-08-24 | Make fleet sweep visibly active during slow operations, reduce GitHub API round-trips, and add compact age and local-file context without weakening removal authority. |
+| 0003 | sweep-progress-readability | `docs/specs/0003-sweep-progress-readability` | complete | no | 2026-08-24 | Make fleet sweep visibly active during slow operations, reduce GitHub API round-trips, and add compact age and local-file context without weakening removal authority. |
 
 ## PROJECT INTENT
 
@@ -38,13 +38,13 @@ See `docs/CONSTITUTION.md` for project-wide constraints and principles.
 
 ### sweep-progress-readability
 
-- **STATUS**: validation
+- **STATUS**: complete
 - **PAUSED**: no
 - **INTENT**: Make fleet sweep visibly active during slow operations, reduce GitHub API round-trips, and add compact age and local-file context without weakening removal authority.
 - **APPROACH**: 1. Animate a TTY-only stderr status line throughout long sweep phases. 2. Deduplicate GitHub evidence by repository identity and resolve default branches plus PR pages in bounded GraphQL batches. 3. Show two-calendar-month stale annotations, compact local-file hints, consistent terminology, and counted actions without changing authority. 4. Validate terminal, batch, rendering, safety, installation, and release contracts before ready-PR delivery.
-- **OPEN ITEMS**: hosted pull-request checks
+- **OPEN ITEMS**: none
 - **POINTERS**: `docs/specs/0003-sweep-progress-readability/SPEC.md`
 
 ## LAST UPDATED
 
-2026-08-24 13:13:44 EDT
+2026-08-24 13:16:51 EDT
