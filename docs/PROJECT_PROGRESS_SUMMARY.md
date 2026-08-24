@@ -62,7 +62,7 @@ See `docs/CONSTITUTION.md` for project-wide constraints and principles.
 - **PAUSED**: no
 - **INTENT**: Render exact interactive apply failures and completion counts before returning the aggregate nonzero sweep error.
 - **APPROACH**: 1. Reuse a compact sanitized failure renderer across human output and interactive completion. 2. Capture the pre-apply failure boundary so only newly appended apply failures are shown after confirmation. 3. Always print removed/pruned/preserved counts before returning apply errors. 4. Prove total failure, partial success, successful completion, non-duplication, and sanitization. 5. Validate and deliver issue #11 from `GH-11` as a ready PR.
-- **OPEN ITEMS**: source-current host installation and hosted pull-request validation
+- **OPEN ITEMS**: hosted pull-request validation
 - **POINTERS**: `docs/specs/0005-sweep-interactive-failures/SPEC.md`
 
 ## LAST UPDATED
