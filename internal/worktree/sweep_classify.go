@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -18,70 +17,28 @@ func (a *App) classifySweepRepositories(
 	config SweepConfig,
 	repositories []sweepRepository,
 	report *SweepReport,
+	now time.Time,
+	progress *sweepProgress,
 ) {
-	for _, target := range repositories {
-		identity, defaultBranch, prs, err := a.sweepRepositoryEvidence(ctx, config, target)
-		if err != nil {
-			report.addFailure("github-evidence", identity, target.primary, err)
+	evidence := a.collectSweepEvidence(ctx, config, repositories, progress)
+	for index, target := range repositories {
+		resolved := evidence[target.commonDir]
+		progress.update("Classifying repository %d/%d: %s", index+1, len(repositories), resolved.identity)
+		if resolved.err != nil {
+			report.addFailure("github-evidence", resolved.identity, target.primary, resolved.err)
 			for _, entry := range target.entries {
-				report.Candidates = append(report.Candidates, newUnprovenSweepCandidate(target, entry, identity, "github-unavailable", err.Error()))
+				candidate := newUnprovenSweepCandidate(target, entry, resolved.identity, "github-unavailable", resolved.err.Error())
+				a.finishSweepCandidate(ctx, target.primary, &candidate, now)
+				report.Candidates = append(report.Candidates, candidate)
 			}
 			continue
 		}
 		for _, entry := range target.entries {
-			candidate := a.classifySweepEntry(ctx, cwd, config, target, entry, identity, defaultBranch, prs[entry.branch])
+			candidate := a.classifySweepEntry(ctx, cwd, config, target, entry, resolved.identity, resolved.defaultBranch, resolved.pullRequests[entry.branch])
+			a.finishSweepCandidate(ctx, target.primary, &candidate, now)
 			report.Candidates = append(report.Candidates, candidate)
 		}
 	}
-}
-
-func (a *App) sweepRepositoryEvidence(
-	ctx context.Context,
-	config SweepConfig,
-	target sweepRepository,
-) (string, string, map[string][]SyncPullRequest, error) {
-	owner, name, err := a.projectIdentity(ctx, target.primary)
-	identity := strings.ToLower(owner + "/" + name)
-	if err != nil {
-		return identity, "", nil, err
-	}
-	evidenceCtx, cancel := context.WithTimeout(ctx, config.Timeout)
-	defer cancel()
-	defaultBranch, err := a.resolveSweepDefault(evidenceCtx, target.primary, identity)
-	if err != nil {
-		return identity, "", nil, err
-	}
-	branches := make([]string, 0, len(target.entries))
-	for _, entry := range target.entries {
-		if entry.branch != "" && entry.branch != defaultBranch && !entry.primary && !entry.prunable {
-			branches = append(branches, entry.branch)
-		}
-	}
-	branches = uniqueStrings(branches)
-	prs := make(map[string][]SyncPullRequest)
-	if len(branches) != 0 {
-		prs, err = a.resolveSweepPRs(evidenceCtx, target.primary, identity, branches)
-	}
-	return identity, defaultBranch, prs, err
-}
-
-func (a *App) sweepDefaultBranch(ctx context.Context, cwd, repository string) (string, error) {
-	output, err := a.command(ctx, cwd, "gh", "repo", "view", repository, "--json", "defaultBranchRef")
-	if err != nil {
-		return "", fmt.Errorf("resolve GitHub default branch: %w", err)
-	}
-	var payload struct {
-		DefaultBranchRef struct {
-			Name string `json:"name"`
-		} `json:"defaultBranchRef"`
-	}
-	if err := json.Unmarshal(output, &payload); err != nil {
-		return "", fmt.Errorf("decode GitHub default branch: %w", err)
-	}
-	if payload.DefaultBranchRef.Name == "" {
-		return "", fmt.Errorf("GitHub did not report a default branch")
-	}
-	return payload.DefaultBranchRef.Name, nil
 }
 
 func (a *App) classifySweepEntry(
@@ -117,9 +74,6 @@ func (a *App) classifySweepEntry(
 	default:
 		candidate = a.classifyMergedSweepEntry(ctx, config, target, entry, candidate, prs[0])
 	}
-	populateSweepUpdated(ctx, a, target.primary, &candidate)
-	candidate.ID = sweepCandidateID(candidate)
-	candidate.Snapshot = sweepCandidateSnapshot(candidate)
 	return candidate
 }
 
@@ -208,15 +162,26 @@ func newUnprovenSweepCandidate(target sweepRepository, entry worktreeEntry, iden
 	return candidate
 }
 
-func populateSweepUpdated(ctx context.Context, app *App, cwd string, candidate *SweepCandidate) {
+func (a *App) finishSweepCandidate(ctx context.Context, cwd string, candidate *SweepCandidate, now time.Time) {
+	populateSweepUpdated(ctx, a, cwd, candidate, now)
+	candidate.ID = sweepCandidateID(*candidate)
+	candidate.Snapshot = sweepCandidateSnapshot(*candidate)
+}
+
+func populateSweepUpdated(ctx context.Context, app *App, cwd string, candidate *SweepCandidate, now time.Time) {
 	if candidate.HeadOID == "" {
 		return
 	}
 	if updated, err := app.gitText(ctx, cwd, "log", "-1", "--format=%cI", candidate.HeadOID); err == nil {
 		if parsed, parseErr := time.Parse(time.RFC3339, updated); parseErr == nil {
 			candidate.LastUpdated = parsed.Format(time.RFC3339)
+			candidate.Stale = sweepWorktreeIsStale(parsed, now)
 		}
 	}
+}
+
+func sweepWorktreeIsStale(updated, now time.Time) bool {
+	return updated.Before(now.AddDate(0, -2, 0))
 }
 
 func sweepCandidateID(candidate SweepCandidate) string {

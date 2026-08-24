@@ -4,44 +4,9 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 )
-
-func TestSweepDefaultBranchUsesPositionalRepository(t *testing.T) {
-	app := NewApp(os.Stdout, os.Stderr)
-	app.run = func(_ context.Context, _ string, name string, args ...string) ([]byte, error) {
-		if name != "gh" || strings.Join(args, " ") != "repo view example/project --json defaultBranchRef" {
-			t.Fatalf("command = %s %v", name, args)
-		}
-		return []byte(`{"defaultBranchRef":{"name":"main"}}`), nil
-	}
-	branch, err := app.sweepDefaultBranch(context.Background(), t.TempDir(), "example/project")
-	if err != nil || branch != "main" {
-		t.Fatalf("branch=%q err=%v", branch, err)
-	}
-}
-
-func TestSweepPullRequestsUseOneFleetBatch(t *testing.T) {
-	app := NewApp(os.Stdout, os.Stderr)
-	calls := 0
-	app.run = func(_ context.Context, _ string, name string, args ...string) ([]byte, error) {
-		calls++
-		joined := strings.Join(args, " ")
-		if name != "gh" || !strings.Contains(joined, "pr list --repo example/project --state all --limit 1000") {
-			t.Fatalf("command = %s %v", name, args)
-		}
-		return []byte(`[{"number":2,"state":"MERGED","baseRefName":"main","headRefName":"GH-1","headRefOid":"abc","isCrossRepository":false,"url":"https://example/2"}]`), nil
-	}
-	result, err := app.resolveSweepPullRequests(context.Background(), t.TempDir(), "example/project", []string{"GH-1", "GH-2"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if calls != 1 || len(result["GH-1"]) != 1 || len(result["GH-2"]) != 0 {
-		t.Fatalf("calls=%d result=%#v", calls, result)
-	}
-}
 
 func TestSweepClassifiesRemoveReadyAndLocalFiles(t *testing.T) {
 	fixture := newGitFixture(t)

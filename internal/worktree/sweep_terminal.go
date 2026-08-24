@@ -52,10 +52,12 @@ func (a *App) runSweepTerminal(
 	if err := persistSweepReview(config.StateRoot, *report); err != nil {
 		return fmt.Errorf("persist confirmed sweep snapshot: %w", err)
 	}
-	if err := a.applySweepCandidates(ctx, cwd, config, options, report, selected); err != nil {
+	progress := newSweepProgress(a.errOut, true)
+	if err := a.applySweepCandidatesWithProgress(ctx, cwd, config, options, report, selected, progress); err != nil {
 		return err
 	}
-	_, err = fmt.Fprintf(a.out, "Applied %d sweep action(s).\n", len(report.Actions))
+	removed, pruned, preserved := summarizeSweepActions(*report)
+	_, err = fmt.Fprintf(a.out, "Removed %d worktree(s); pruned %d metadata record(s); preserved/failed %d target(s).\n", removed, pruned, preserved)
 	return err
 }
 
@@ -65,7 +67,18 @@ func (a *App) chooseSweepMenu(
 	candidates []SweepCandidate,
 	options SweepOptions,
 ) ([]SweepCandidate, error) {
-	if _, err := fmt.Fprint(a.out, "[r] remove ready  [d] ready + dirty  [m] review merged  [i] selector  [q] quit: "); err != nil {
+	readyWT, readyMetadata := sweepMenuCounts(candidates, SweepRemoveReady, SweepStaleMetadata)
+	localWT, localMetadata := sweepMenuCounts(candidates, SweepRemoveReady, SweepMergedLocalFiles, SweepStaleMetadata)
+	mergedWT, _ := sweepMenuCounts(candidates, SweepRemoveReady, SweepMergedLocalFiles, SweepMergedLocalCommits)
+	selectableWT, selectableMetadata := sweepMenuCounts(candidates, SweepRemoveReady, SweepMergedLocalFiles, SweepMergedLocalCommits, SweepStaleMetadata)
+	prompt := fmt.Sprintf(
+		"Actions:\n  [r] remove ready (%s)\n  [l] remove ready + Merged + Local Files (%s)\n  [m] review merged (%d WT)\n  [i] selector (%s)\n  [q] quit\nChoice: ",
+		sweepMenuCountLabel(readyWT, readyMetadata),
+		sweepMenuCountLabel(localWT, localMetadata),
+		mergedWT,
+		sweepMenuCountLabel(selectableWT, selectableMetadata),
+	)
+	if _, err := fmt.Fprint(a.out, prompt); err != nil {
 		return nil, err
 	}
 	choice, err := reader.ReadString('\n')
@@ -75,7 +88,7 @@ func (a *App) chooseSweepMenu(
 	switch strings.ToLower(strings.TrimSpace(choice)) {
 	case "r":
 		return selectSweepStates(candidates, SweepRemoveReady, SweepStaleMetadata), nil
-	case "d":
+	case "d", "l":
 		return selectSweepStates(candidates, SweepRemoveReady, SweepMergedLocalFiles, SweepStaleMetadata), nil
 	case "m", "i":
 		return a.selectSweepTerminal(ctx, candidates, options)

@@ -95,6 +95,7 @@ type SweepCandidate struct {
 	ForceBranch     bool                 `json:"force_branch"`
 	SizeBytes       int64                `json:"size_bytes,omitempty"`
 	LastUpdated     string               `json:"last_updated,omitempty"`
+	Stale           bool                 `json:"stale"`
 	Status          SweepStatus          `json:"status"`
 	ExtraCommits    []string             `json:"extra_commits,omitempty"`
 	ProcessEvidence SweepProcessEvidence `json:"process_evidence"`

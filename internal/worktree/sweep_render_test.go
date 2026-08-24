@@ -13,7 +13,7 @@ func TestSweepHumanAndJSONUseSameReport(t *testing.T) {
 		Result:        "report",
 		Candidates: []SweepCandidate{
 			{ID: "one", Repository: "example/project", Path: "/tmp/one", Branch: "GH-1", State: SweepRemoveReady, SizeBytes: 2048},
-			{ID: "two", Repository: "example/project", Path: "/tmp/two", Branch: "GH-2", State: SweepMergedLocalFiles, SizeBytes: 1024},
+			{ID: "two", Repository: "example/project", Path: "/tmp/two", Branch: "GH-2", State: SweepMergedLocalFiles, SizeBytes: 1024, LastUpdated: "2026-05-01T12:00:00Z", Stale: true, Status: SweepStatus{Lines: []string{"?? local.txt"}}},
 		},
 	}
 	var human, machine bytes.Buffer
@@ -23,7 +23,7 @@ func TestSweepHumanAndJSONUseSameReport(t *testing.T) {
 	if err := writeSweepJSON(&machine, report); err != nil {
 		t.Fatal(err)
 	}
-	for _, value := range []string{"REMOVE READY", "MERGED + LOCAL FILES", "/tmp/one", "/tmp/two"} {
+	for _, value := range []string{"REMOVE READY", "MERGED + LOCAL FILES", "LAST UPDATED", "2026-05-01 STALE", "local files: local.txt", "/tmp/one", "/tmp/two"} {
 		if !strings.Contains(human.String(), value) {
 			t.Fatalf("human output missing %q:\n%s", value, human.String())
 		}
@@ -37,7 +37,7 @@ func TestSweepHumanAndJSONUseSameReport(t *testing.T) {
 
 func TestRenderSweepSelectorShowsSelectionAndBlockedRows(t *testing.T) {
 	candidates := []SweepCandidate{
-		{ID: "one", Repository: "example/project", Path: "/tmp/one", Branch: "GH-1", State: SweepRemoveReady, Selectable: true, SizeBytes: 1024},
+		{ID: "one", Repository: "example/project", Path: "/tmp/one", Branch: "GH-1", State: SweepRemoveReady, Selectable: true, SizeBytes: 1024, LastUpdated: "2026-05-01T12:00:00Z", Stale: true, Status: SweepStatus{Lines: []string{"?? local.txt"}}},
 		{ID: "two", Repository: "example/project", Path: "/tmp/two", Branch: "main", State: SweepProtectedActive},
 	}
 	var output bytes.Buffer
@@ -45,7 +45,7 @@ func TestRenderSweepSelectorShowsSelectionAndBlockedRows(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if lines < 5 || !strings.Contains(output.String(), "[x]") || !strings.Contains(output.String(), "[-]") || !strings.Contains(output.String(), "REMOVE READY") {
+	if lines < 5 || !strings.Contains(output.String(), "[x]") || !strings.Contains(output.String(), "[-]") || !strings.Contains(output.String(), "REMOVE READY") || !strings.Contains(output.String(), "2026-05-01 STALE") || !strings.Contains(output.String(), "local.txt") {
 		t.Fatalf("selector output:\n%s", output.String())
 	}
 	if strings.Contains(output.String(), "\x1b[") {

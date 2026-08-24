@@ -35,6 +35,9 @@ func writeSweepHuman(writer io.Writer, report SweepReport, options SweepOptions,
 		if _, err := fmt.Fprintf(writer, "%s  %d worktree(s)  %s\n", label, len(candidates), humanSweepBytes(bytes)); err != nil {
 			return err
 		}
+		if _, err := fmt.Fprintln(writer, "  SIZE      LAST UPDATED     BRANCH       PR       REPOSITORY               PATH"); err != nil {
+			return err
+		}
 		for _, candidate := range candidates {
 			pr := "-"
 			if candidate.PullRequest != nil {
@@ -42,14 +45,20 @@ func writeSweepHuman(writer io.Writer, report SweepReport, options SweepOptions,
 			}
 			if _, err := fmt.Fprintf(
 				writer,
-				"  %-9s %-12s %-8s %-24s %s\n",
+				"  %-9s %-16s %-12s %-8s %-24s %s\n",
 				humanSweepBytes(candidate.SizeBytes),
+				sweepUpdatedLabel(candidate),
 				sanitizeTerminalField(candidate.Branch),
 				pr,
 				sanitizeTerminalField(candidate.Repository),
 				sanitizeTerminalField(candidate.Path),
 			); err != nil {
 				return err
+			}
+			if files := sweepLocalFileSummary(candidate.Status, 48); files != "" {
+				if _, err := fmt.Fprintf(writer, "    local files: %s\n", files); err != nil {
+					return err
+				}
 			}
 			if options.Verbose {
 				if _, err := fmt.Fprintf(writer, "    %s: %s\n", sanitizeTerminalField(candidate.Reason), sanitizeTerminalField(candidate.Detail)); err != nil {
@@ -81,13 +90,15 @@ func writeSweepExplanation(writer io.Writer, report SweepReport, target string, 
 		}
 		_, err := fmt.Fprintf(
 			writer,
-			"%s\nID: %s\nRepository: %s\nBranch: %s\nPath: %s\nSize: %s\nReason: %s\nDetail: %s\nProcess: %s %s\n",
+			"%s\nID: %s\nRepository: %s\nBranch: %s\nPath: %s\nSize: %s\nLast updated: %s\nLocal files: %s\nReason: %s\nDetail: %s\nProcess: %s %s\n",
 			sweepColorize(sweepStateLabel(candidate.State), sweepStateColor(candidate.State), color),
 			candidate.ID,
 			sanitizeTerminalField(candidate.Repository),
 			sanitizeTerminalField(candidate.Branch),
 			sanitizeTerminalField(candidate.Path),
 			humanSweepBytes(candidate.SizeBytes),
+			sweepUpdatedLabel(candidate),
+			sweepLocalFileSummary(candidate.Status, 72),
 			sanitizeTerminalField(candidate.Reason),
 			sanitizeTerminalField(candidate.Detail),
 			candidate.ProcessEvidence.State,
