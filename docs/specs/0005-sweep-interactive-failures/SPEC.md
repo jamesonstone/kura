@@ -2,7 +2,7 @@
 kit_metadata_version: 1
 artifact: "spec"
 workflow_version: 3
-phase: "validation"
+phase: "complete"
 feature:
   id: "0005"
   slug: "sweep-interactive-failures"
@@ -208,7 +208,8 @@ explicit bulk retirement of age-stale worktrees with recovery refs preserved.
 - PASS: after PR #12 was squash-merged externally, the same GH-11 worklane was
   semantically reconciled with merged `main`. Post-reconciliation `make check`
   passed in 87.168 seconds and `make test-race` passed in 96.569 seconds.
-- PENDING: hosted validation for follow-up PR #14.
+- PASS: follow-up PR #14 head `532207c` was ready, `MERGEABLE`, and `CLEAN`;
+  Validate, Lint, and GoReleaser snapshot all passed with no review feedback.
 
 ## NOTES
 
@@ -225,3 +226,5 @@ explicit bulk retirement of age-stale worktrees with recovery refs preserved.
 - 2026-08-24: PR #12 merged before the approved follow-up completed; issue #11
   was reopened and the same GH-11 lane delivered only the follow-up tree diff
   through PR #14 after semantic squash-base reconciliation.
+- 2026-08-24: Follow-up PR #14 completed hosted validation on the reconciled
+  approved head.
