@@ -1,4 +1,4 @@
-.TH GIT-WT 1 "August 4, 2026" "git-wt" "Git Manual"
+.TH GIT-WT 1 "August 24, 2026" "git-wt" "Git Manual"
 .SH NAME
 git-wt \- manage and open project-oriented Git worktrees
 .SH SYNOPSIS
@@ -45,6 +45,20 @@ repository-root
 .B bin/
 directory is disposable build output during sync.
 .TP
+.B sweep [options]
+Discover linked worktrees across built-in and configured roots, classify exact
+GitHub merge evidence, report approximate disk usage, and offer bounded removal
+actions. Bare terminal use prints grouped results and opens an action menu;
+redirected output is non-mutating.
+.TP
+.B sweep config [--config path]
+Create or update sweep configuration interactively. The first bare terminal
+sweep offers the same wizard when the default config is absent. The wizard can
+toggle built-ins, add or remove typed roots, preserve comments, display the
+complete old/new YAML, retain one backup, and atomically write after final
+confirmation. Operational automation, JSON, dry-run, and redirected runs never
+prompt or create configuration.
+.TP
 .B home
 Open a shell in this clone's primary worktree.
 .TP
@@ -89,12 +103,76 @@ Reverse the selected sort order.
 .TP
 .B --plain
 Print the table instead of opening the terminal selector.
+.SH SWEEP OPTIONS
+.TP
+.B --auto
+Without prompting, remove only clean exact-head lanes proven merged into the
+GitHub default branch plus native stale metadata.
+.TP
+.B --interactive, -i
+Open the colorized multi-selector. Use arrows or j/k to move, Space to toggle,
+/ to filter, s to sort, e to explain, and Enter to review. A second Enter
+confirms the unchanged exact target set.
+.TP
+.B --json
+Emit the versioned deterministic report as JSON. JSON mode never prompts.
+.TP
+.B --dry-run
+Explicitly request non-mutating report behavior.
+.TP
+.BI "--root " path
+Add one bounded worktree pool root. May be repeated.
+.TP
+.BI "--project-root " path
+Add one bounded project root whose repositories may contain
+.IR .claude/worktrees .
+.TP
+.BI "--exclude-root " path
+Exclude one root subtree. May be repeated.
+.TP
+.BI "--only " state
+Limit output to one stable sweep state.
+.TP
+.BI "--sort " attribute
+Sort by state, size, updated, repository, or path.
+.TP
+.B --no-sizes
+Skip approximate disk-usage calculation.
+.TP
+.BI "--color " mode
+Use auto, always, or never color behavior. NO_COLOR also disables color.
+.TP
+.BI "--config " path
+Use one explicit versioned YAML config.
+.TP
+.BI "--jobs " number
+Bound concurrent work such as disk-size calculation.
+.TP
+.BI "--timeout " duration
+Bound GitHub evidence collection per repository.
+.TP
+.B --verbose
+Include classification reasons and details in human output.
+.TP
+.BI "--explain " path-or-id
+Explain one matching candidate without applying changes.
 .SH ENVIRONMENT
 .TP
 .B GIT_WT_ROOT
 Override
 .IR ~/worktrees ,
 primarily for testing.
+.TP
+.B XDG_CONFIG_HOME
+Controls the optional Kura config root. Sweep reads
+.IR kura/git-wt.yaml .
+.TP
+.B XDG_STATE_HOME
+Controls persisted redacted sweep reports beneath
+.IR kura/git-wt/sweeps .
+.TP
+.B NO_COLOR
+Disable ANSI color in sweep output.
 .SH SAFETY
 Detached
 .B PR-<number>
@@ -118,6 +196,14 @@ Sync may discard only an actual ignored root
 directory after merged-pull-request and exact-head proof. Other ignored paths,
 nested bin directories, symlinks, tracked changes, and ordinary untracked files
 remain protected. No command stashes, resets, cleans, or force-removes
-worktrees.
+worktrees during ordinary remove, sync, or automatic sweep.
+.PP
+Sweep treats primary, current, default-branch, locked, positively active,
+detached, fork-backed, wrong-base, open, closed-unmerged, missing, ambiguous,
+and GitHub-unavailable worktrees as non-selectable. Automatic sweep never
+forces. A human may explicitly select a GitHub-merged lane containing local
+files or commits only after reviewing its exact paths, OIDs, commits, and
+recovery loss; sweep revalidates that snapshot before its one confirmed force
+operation. Remote branches are never deleted.
 .SH SEE ALSO
 .BR git-worktree (1)

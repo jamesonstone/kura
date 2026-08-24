@@ -17,6 +17,8 @@ type worktreeEntry struct {
 	branch      string
 	primary     bool
 	prunable    bool
+	locked      bool
+	lockReason  string
 	lastUpdated time.Time
 	updatedText string
 	prText      string
@@ -53,6 +55,11 @@ func (a *App) worktrees(ctx context.Context, cwd string) ([]worktreeEntry, error
 			current.branch = strings.TrimPrefix(line, "branch refs/heads/")
 		case strings.HasPrefix(line, "prunable"):
 			current.prunable = true
+		case line == "locked":
+			current.locked = true
+		case strings.HasPrefix(line, "locked "):
+			current.locked = true
+			current.lockReason = strings.TrimPrefix(line, "locked ")
 		}
 	}
 	if err := scanner.Err(); err != nil {

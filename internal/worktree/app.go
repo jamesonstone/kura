@@ -34,6 +34,8 @@ Commands:
   repair <number> [--no-link-env]  Open a same-repository PR's writable head branch
   list [flags]                     List this clone's worktrees without pruning (default)
   sync [--dry-run] [--json]       Reconcile origin and proven merged worktree lanes
+  sweep [flags]                    Discover and clean merged lanes across configured roots
+  sweep config [--config <path>]  Create or update sweep configuration interactively
   home                             Open a shell in this clone's primary worktree
   root                             Print the canonical linked-worktree directory
   path <lane>                      Print an exact registered lane path for shell navigation
@@ -58,6 +60,17 @@ List PR# markers:
 Interactive TITLE:
   Shows matching PR titles and truncates before PATH; plain output is unchanged.
 
+Sweep flags:
+  --auto                           Remove only remove-ready lanes without prompting
+  --interactive, -i                Open the multi-select sweep interface
+  --json                           Emit the versioned report as JSON
+  --dry-run                        Explicitly request report-only behavior
+  --root / --project-root          Add bounded discovery roots
+  --exclude-root                   Exclude one root subtree
+  --sort state|size|updated|repository|path
+  --color auto|always|never        Control human-output color
+  --no-sizes                       Skip disk-usage calculation
+
 Safety:
   PR-<number> is detached and inspection-only; use repair for edits.
   Writable lanes link the primary checkout's .env and .envrc by default when present.
@@ -65,9 +78,11 @@ Safety:
   remove never forces, deletes a branch, or discards dirty/unpushed state.
   sync may discard ignored root bin/ output only from exact proven merged lanes.
   sync --dry-run performs no fetch, ref update, removal, deletion, or pruning.
+  sweep --auto removes only exact clean lanes proven merged into the GitHub default branch.
   migrate previews by default and uses git worktree move when applied.
   No command starts applications or manages databases, ports, or runtime services.
-  No command stashes, resets, cleans, or force-removes worktrees.`
+  No command stashes, resets, cleans, force-pushes, or deletes remote branches.
+  Only an exact human-confirmed sweep selection may force-remove local files or commits.`
 
 type commandFunc func(context.Context, string, string, ...string) ([]byte, error)
 
@@ -97,27 +112,30 @@ type PullRequestRepair struct {
 }
 
 type resolvePRFunc func(context.Context, string, string, int) (PR, error)
+type sweepDefaultResolverFunc func(context.Context, string, string) (string, error)
 
 // App implements the git-wt command.
 type App struct {
-	out            io.Writer
-	errOut         io.Writer
-	run            commandFunc
-	homeDir        func() (string, error)
-	getenv         func(string) string
-	readDir        func(string) ([]os.DirEntry, error)
-	mkdirAll       func(string, os.FileMode) error
-	removeAll      func(string) error
-	pathExists     func(string) (bool, error)
-	lookPath       func(string) (string, error)
-	resolvePR      resolvePRFunc
-	resolveListPRs listPRResolverFunc
-	resolveSyncPRs syncPRResolverFunc
-	listPRTimeout  time.Duration
-	runShell       func(context.Context, string) error
-	isTerminal     func() bool
-	selectList     listSelectorFunc
-	stdin          io.Reader
+	out                 io.Writer
+	errOut              io.Writer
+	run                 commandFunc
+	homeDir             func() (string, error)
+	getenv              func(string) string
+	readDir             func(string) ([]os.DirEntry, error)
+	mkdirAll            func(string, os.FileMode) error
+	removeAll           func(string) error
+	pathExists          func(string) (bool, error)
+	lookPath            func(string) (string, error)
+	resolvePR           resolvePRFunc
+	resolveListPRs      listPRResolverFunc
+	resolveSyncPRs      syncPRResolverFunc
+	resolveSweepPRs     syncPRResolverFunc
+	resolveSweepDefault sweepDefaultResolverFunc
+	listPRTimeout       time.Duration
+	runShell            func(context.Context, string) error
+	isTerminal          func() bool
+	selectList          listSelectorFunc
+	stdin               io.Reader
 }
 
 // NewApp creates an App backed by the local Git and GitHub CLIs.
@@ -148,6 +166,8 @@ func NewApp(out, errOut io.Writer) *App {
 	app.resolvePR = app.resolvePullRequest
 	app.resolveListPRs = app.resolveListPullRequests
 	app.resolveSyncPRs = app.resolveSyncPullRequests
+	app.resolveSweepPRs = app.resolveSweepPullRequests
+	app.resolveSweepDefault = app.sweepDefaultBranch
 	app.runShell = runInteractiveShell
 	app.isTerminal, app.selectList = newListInteraction(out)
 	return app
@@ -193,6 +213,8 @@ func (a *App) Run(ctx context.Context, cwd string, args []string) error {
 		return a.list(ctx, cwd, args[1:])
 	case "sync":
 		return a.sync(ctx, cwd, args[1:])
+	case "sweep":
+		return a.sweep(ctx, cwd, args[1:])
 	case "issue":
 		value, linkEnv, err := writableLaneArgs("issue", "number", args[1:])
 		if err != nil {

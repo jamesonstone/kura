@@ -5,6 +5,7 @@ go 1.25.12
 require (
 	github.com/mattn/go-runewidth v0.0.27
 	golang.org/x/term v0.41.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

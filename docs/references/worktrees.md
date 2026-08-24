@@ -122,6 +122,72 @@ OID-mismatched, detached, legacy, primary, or current lane is preserved with a
 reason. The command never stashes, resets, cleans, force-removes, force-deletes,
 force-pushes, or deletes a remote branch.
 
+## Fleet Sweep
+
+Use `git wt sweep` when maintenance spans more than one Git clone or worktree
+pool. Sweep starts outside any particular repository, discovers only bounded
+roots, deduplicates clones by physical Git common directory, and uses
+authenticated `gh` evidence without fetching or reconciling local defaults:
+
+```bash
+git wt sweep
+git wt sweep --interactive
+git wt sweep --auto --json
+```
+
+Built-in worktree roots are `~/worktrees`, `~/.codex/worktrees`,
+`~/Documents/Codex`, and `~/.claude-worktrees`. Optional versioned YAML at
+`$XDG_CONFIG_HOME/kura/git-wt.yaml`, or `~/.config/kura/git-wt.yaml`, adds
+roots, project roots, and exclusions. A configured project root is inspected
+only for repository-local `.claude/worktrees`; sweep never recursively scans
+the entire home directory. Marker paths, physical containment, exact Git
+registration, primary identity, repository identity, and common-directory
+ownership must all agree before classification.
+
+When that default file is absent, bare terminal `git wt sweep` offers a
+first-run wizard before discovery. It asks whether to create configuration,
+whether to enable built-ins, and finally whether to add more typed paths.
+Saving reloads the new config and continues the same sweep. Declining runs once
+with in-memory defaults. Non-terminal, `--auto`, `--json`, and explicit
+`--dry-run` invocations never prompt or write.
+
+Use `git wt sweep config` to create or reopen the default config, or append
+`--config <path>` to manage a custom one. Existing configuration can toggle
+built-ins and add or remove worktree-pool, project-root, and exclusion entries.
+The wizard preserves comments and unrelated supported fields, displays the
+complete old/new YAML, retains one `0600` backup, and atomically replaces the
+confirmed `0600` file beneath a `0700` directory. Missing future directories
+produce a warning; invalid, unknown, unsafe, or symlink configuration fails
+closed.
+
+Sweep reports six stable states:
+
+- `remove-ready`: one same-repository PR merged into the current GitHub default
+  branch, exact local head equality, no local material, and no protection;
+- `merged-local-files`: the same merge/head proof plus tracked, staged,
+  untracked, ignored, or submodule state;
+- `merged-local-commits`: a merged PR exists but the local head differs;
+- `protected-active`: primary, current, default-branch, locked, or positively
+  live-process state;
+- `unproven-not-merged`: detached, fork, wrong-base, open, closed-unmerged,
+  missing, ambiguous, or unavailable evidence;
+- `stale-metadata`: native Git administrative state whose path is absent.
+
+`--auto` removes only `remove-ready` and stale metadata. It never forces,
+deletes local files or divergent commits, deletes a remote branch, fetches,
+updates refs, or fast-forwards a default. Terminal users may explicitly select
+GitHub-merged dirty or divergent lanes. The review lists exact paths, local
+status categories, OIDs, extra commits, approximate reclaimable size, and
+recovery loss. A second Enter confirms the immutable target snapshot; any
+drift aborts and refreshes the report. Only that human-confirmed path may use
+native forced worktree removal or exact local `git branch -D`.
+
+The interactive selector uses arrows or `j`/`k`, Space, `/` filtering, `s`
+sorting, `e` explanation, Enter review, and a second Enter confirmation. Human
+output uses redundant state labels as well as color and honors `NO_COLOR`.
+Versioned JSON and redacted run evidence beneath the XDG state directory expose
+the same deterministic report for an external scheduler.
+
 The first entry is Git's primary worktree. Capture its stable physical path for
 environment-link validation:
 
@@ -289,6 +355,12 @@ GitHub and fetch failures fail closed. A failure for one candidate does not
 prevent an independently proven-safe candidate from being processed, but any
 operation failure makes the overall command exit nonzero after its complete
 human or JSON report.
+
+`git wt sweep` is the explicit fleet path. Automatic runs retain the ordinary
+non-force guardrails. Its separate terminal-confirmed dirty and local-history
+actions are hard-delete operations: coding agents and unattended automation
+must not invoke those actions, and the selected human target snapshot must be
+revalidated before execution.
 
 Move a registered legacy worktree only after validating its exact source,
 destination, and every collision:
