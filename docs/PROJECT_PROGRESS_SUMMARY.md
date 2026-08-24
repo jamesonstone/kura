@@ -8,7 +8,7 @@
 | 0002 | worktree-sweep | `docs/specs/0002-worktree-sweep` | complete | no | 2026-08-24 | Add one fleet-wide `git wt sweep` command that discovers linked Git worktrees across bounded user and provider roots, proves GitHub merge state, reports disk usage and safety classifications, and removes only the exact worktrees selected through the authority appropriate to their risk. |
 | 0003 | sweep-progress-readability | `docs/specs/0003-sweep-progress-readability` | complete | no | 2026-08-24 | Make fleet sweep visibly active during slow operations, reduce GitHub API round-trips, and add compact age and local-file context without weakening removal authority. |
 | 0004 | sweep-batched-revalidation | `docs/specs/0004-sweep-batched-revalidation` | complete | no | 2026-08-24 | Replace per-candidate fleet refreshes with one selected-set revalidation plus immediate target-local safety checks. |
-| 0005 | sweep-interactive-failures | `docs/specs/0005-sweep-interactive-failures` | validation | no | 2026-08-24 | Render exact interactive apply failures and completion counts before returning the aggregate nonzero sweep error. |
+| 0005 | sweep-interactive-failures | `docs/specs/0005-sweep-interactive-failures` | complete | no | 2026-08-24 | Render exact interactive apply failures and completion counts before returning the aggregate nonzero sweep error. |
 
 ## PROJECT INTENT
 
@@ -58,13 +58,13 @@ See `docs/CONSTITUTION.md` for project-wide constraints and principles.
 
 ### sweep-interactive-failures
 
-- **STATUS**: validation
+- **STATUS**: complete
 - **PAUSED**: no
 - **INTENT**: Render exact interactive apply failures and completion counts before returning the aggregate nonzero sweep error.
 - **APPROACH**: 1. Reuse a compact sanitized failure renderer across human output and interactive completion. 2. Capture the pre-apply failure boundary so only newly appended apply failures are shown after confirmation. 3. Always print removed/pruned/preserved counts before returning apply errors. 4. Prove total failure, partial success, successful completion, non-duplication, and sanitization. 5. Validate and deliver issue #11 from `GH-11` as a ready PR.
-- **OPEN ITEMS**: hosted pull-request validation
+- **OPEN ITEMS**: none
 - **POINTERS**: `docs/specs/0005-sweep-interactive-failures/SPEC.md`
 
 ## LAST UPDATED
 
-2026-08-24 14:45:34 EDT
+2026-08-24 14:48:45 EDT
