@@ -169,7 +169,11 @@ STALE review path without weakening removal authority.
   77.044 seconds; stacked `make test-race` passed in 84.952 seconds.
 - PASS: stacked lint reported zero findings; release configuration, all six
   snapshot archives, manpage lint, Gitleaks scans, and govulncheck passed.
-- PENDING: install the stacked exact head and rerun hosted PR validation.
+- PASS: `make build` installed stacked commit `010729d` with exact Kura module
+  provenance/version ldflags and refreshed the user-local manual. An isolated
+  real PTY sweep rendered the new failure and STALE actions and quit without
+  applying any removal.
+- PENDING: rerun hosted PR validation on the stacked head.
 
 ## NOTES
 

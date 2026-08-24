@@ -62,7 +62,7 @@ See `docs/CONSTITUTION.md` for project-wide constraints and principles.
 - **PAUSED**: no
 - **INTENT**: Render exact interactive failures, provide safe retry/exclusion triage, and add guarded STALE review.
 - **APPROACH**: 1. Reuse a compact sanitized failure renderer across human output and interactive completion. 2. Capture the pre-apply failure boundary so only newly appended apply failures are shown after confirmation. 3. Always print removed/pruned/preserved counts before returning apply errors. 4. Add failure actions for retry and exact reviewed exclusions without repository/file repair. 5. Add a STALE-only selector that preserves state authority. 6. Prove failure, partial-success, retry, exclusion, safety, and stale-filter behavior before ready-PR delivery.
-- **OPEN ITEMS**: stacked exact-head installation and hosted validation
+- **OPEN ITEMS**: stacked hosted validation
 - **POINTERS**: `docs/specs/0005-sweep-interactive-failures/SPEC.md`
 
 ## LAST UPDATED
