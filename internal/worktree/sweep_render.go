@@ -71,14 +71,7 @@ func writeSweepHuman(writer io.Writer, report SweepReport, options SweepOptions,
 		}
 	}
 	if len(report.Failures) != 0 {
-		if _, err := fmt.Fprintln(writer, sweepColorize("FAILURES", colorRed, color)); err != nil {
-			return err
-		}
-		for _, failure := range report.Failures {
-			if _, err := fmt.Fprintf(writer, "  %s %s: %s\n", sanitizeTerminalField(failure.Operation), sanitizeTerminalField(failure.Path), sanitizeTerminalField(failure.Error)); err != nil {
-				return err
-			}
-		}
+		return writeSweepFailureBlock(writer, report.Failures, color)
 	}
 	return nil
 }

@@ -204,6 +204,12 @@ each worktree removal, rechecks exact registration, branch, head OID, and local
 status fingerprint. Missing or drifted targets are preserved independently;
 fleet discovery and GitHub evidence are never repeated once per selection.
 
+Every confirmed interactive apply ends with `SWEEP COMPLETION`. The block shows
+removed worktrees, pruned metadata, and preserved/failed targets. Apply failures
+then identify the exact operation, repository/path, and sanitized error before
+the terse aggregate nonzero command error. Discovery and GitHub failures already
+shown before selection are not repeated in this completion block.
+
 The counted action menu uses `Remove Ready` and `Merged + Local Files`
 terminology consistently with the report. The interactive selector uses arrows or `j`/`k`, Space, `/` filtering, `s`
 sorting, `e` explanation, Enter review, and a second Enter confirmation. Human

@@ -3,6 +3,7 @@ package worktree
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -52,13 +53,19 @@ func (a *App) runSweepTerminal(
 	if err := persistSweepReview(config.StateRoot, *report); err != nil {
 		return fmt.Errorf("persist confirmed sweep snapshot: %w", err)
 	}
+	failureStart := len(report.Failures)
 	progress := newSweepProgress(a.errOut, true)
-	if err := a.applySweepCandidatesWithProgress(ctx, cwd, config, options, report, selected, progress); err != nil {
-		return err
+	applyErr := a.applySweepCandidatesWithProgress(ctx, cwd, config, options, report, selected, progress)
+	completionErr := writeSweepCompletion(
+		a.out,
+		*report,
+		report.Failures[failureStart:],
+		sweepUseColor(a, options),
+	)
+	if completionErr != nil {
+		report.addFailure("write-interactive-completion", "", "", completionErr)
 	}
-	removed, pruned, preserved := summarizeSweepActions(*report)
-	_, err = fmt.Fprintf(a.out, "Removed %d worktree(s); pruned %d metadata record(s); preserved/failed %d target(s).\n", removed, pruned, preserved)
-	return err
+	return errors.Join(applyErr, completionErr)
 }
 
 func (a *App) chooseSweepMenu(

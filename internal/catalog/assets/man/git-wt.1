@@ -57,6 +57,10 @@ After confirmation, one size-free fleet refresh revalidates the complete
 selected set before any mutation. Sweep then refreshes process evidence once
 and rechecks each target's exact registration, branch, head, and local status
 immediately before removal; it does not rebuild the fleet once per target.
+Every confirmed interactive apply ends with completion counts. New apply
+failures identify their operation, repository or path, and exact error before
+the command returns its aggregate nonzero status; failures shown before
+selection are not repeated.
 .TP
 .B sweep config [--config path]
 Create or update sweep configuration interactively. The first bare terminal
