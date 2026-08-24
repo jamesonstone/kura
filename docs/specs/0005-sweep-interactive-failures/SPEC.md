@@ -2,7 +2,7 @@
 kit_metadata_version: 1
 artifact: "spec"
 workflow_version: 3
-phase: "validation"
+phase: "complete"
 feature:
   id: "0005"
   slug: "sweep-interactive-failures"
@@ -173,7 +173,8 @@ STALE review path without weakening removal authority.
   provenance/version ldflags and refreshed the user-local manual. An isolated
   real PTY sweep rendered the new failure and STALE actions and quit without
   applying any removal.
-- PENDING: rerun hosted PR validation on the stacked head.
+- PASS: stacked PR #12 head `21408d0` remained ready, `MERGEABLE`, and `CLEAN`;
+  Validate, Lint, and GoReleaser snapshot passed again with no review feedback.
 
 ## NOTES
 
@@ -183,3 +184,5 @@ STALE review path without weakening removal authority.
   release, installation, and hosted validation passed.
 - 2026-08-24: User-requested failure triage and STALE review were stacked onto
   the existing GH-11/PR #12 delivery lane with no new issue or branch.
+- 2026-08-24: The stacked head completed local, race, security, release,
+  installation, real-PTY, and hosted validation.
