@@ -2,7 +2,7 @@
 kit_metadata_version: 1
 artifact: "spec"
 workflow_version: 3
-phase: "complete"
+phase: "validation"
 feature:
   id: "0005"
   slug: "sweep-interactive-failures"
@@ -49,8 +49,8 @@ delivery_intent: issue_branch_pr_ready
 
 ## PURPOSE
 
-Show exact interactive sweep apply failures before returning the aggregate
-nonzero command error.
+Show exact interactive sweep failures, provide safe guided triage, and add a
+STALE review path without weakening removal authority.
 
 ## CONTEXT
 
@@ -62,6 +62,10 @@ nonzero command error.
   failure(s)`.
 - Initial discovery/GitHub failures were already shown in the first grouped
   report and should not be duplicated after apply.
+- Discovery failures include orphaned `.git` markers and repositories that are
+  unavailable through GitHub. Safe in-command actions can retry or exclude an
+  exact retired path, but must not guess identity or delete local contents.
+- Age-based `STALE` is currently visible but has no dedicated menu path.
 - GitHub issue #11 and exact branch/worktree `GH-11` own the repair.
 
 ## REQUIREMENTS
@@ -81,6 +85,21 @@ nonzero command error.
 - REQ-007: A completion-output write error is recorded fail closed even when
   apply also failed.
 - REQ-008: Keep every Go source and test file at or below 300 physical lines.
+- REQ-009: Add `[f] address failures (N)` to the bare terminal menu. Show each
+  operation, target, exact error, and a type-specific remediation hint.
+- REQ-010: Failure triage may retry the complete read-only sweep immediately or
+  add explicitly selected exact failure paths to configured exclusions.
+- REQ-011: Exclusion changes show the full YAML diff, require confirmation,
+  preserve comments/settings, retain the existing backup, and refresh the same
+  sweep after a successful write.
+- REQ-012: Refuse empty, relative, filesystem-root, or home-root failure
+  exclusions. Never delete an orphan directory, prune metadata manually, or
+  rewrite Git/GitHub repository identity from this workflow.
+- REQ-013: Add `[s] review STALE` with total/selectable counts. The selector
+  shows all age-stale candidates matching `--only`, keeps protected/unproven
+  rows blocked, and retains exact review/confirmation for selected rows.
+- REQ-014: Age alone never changes state, selectability, automatic authority,
+  force authority, or branch-removal behavior.
 
 ## ACCEPTANCE
 
@@ -96,6 +115,12 @@ nonzero command error.
   application, and sweep safety tests remain green.
 - AC-006: Full checks, race tests, lint, release builds, security scans,
   installation smoke tests, and hosted PR checks pass.
+- AC-007: Tests prove retry rebuilds and re-renders the report in the same
+  terminal action loop, clearing a resolved failure.
+- AC-008: Tests prove confirmed exact-path exclusions are persisted and broad
+  home/root exclusions are refused.
+- AC-009: Tests prove the menu reports STALE total/selectable counts and the
+  stale filter includes blocked rows without making them selectable.
 
 ## ACCEPTED PLAN
 
@@ -103,7 +128,8 @@ nonzero command error.
 2. Capture the pre-apply failure boundary in `runSweepTerminal`.
 3. Always render completion after apply, then return the original apply error.
 4. Add total-failure, partial-success, successful, and sanitization tests.
-5. Update guidance, validate, install, and deliver the ready GH-11 PR.
+5. Add guided retry/exclusion failure actions and the guarded STALE selector.
+6. Update guidance, validate, install, and deliver the ready GH-11 PR.
 
 ## DECISIONS
 
@@ -111,6 +137,9 @@ nonzero command error.
   remains the sole rendering of discovery and GitHub failures.
 - Exact errors are terminal-sanitized rather than summarized away.
 - The aggregate CLI error remains intentionally terse after the detailed block.
+- Failure exclusion is a reversible discovery-policy action, not repair or
+  deletion. Identity correction remains an explicit repository operation.
+- STALE is a selector lens only; existing state-based authority remains final.
 
 ## VALIDATION
 
@@ -132,6 +161,15 @@ nonzero command error.
 - PASS: PR #12 implementation head `919e189` was ready, `MERGEABLE`, and
   `CLEAN`; maintainer assignment, Validate, Lint, and GoReleaser snapshot checks
   all completed successfully with no review comments or change requests.
+- PASS: stacked focused tests prove immediate retry/re-render, confirmed exact
+  exclusion persistence, affected linked-worktree expansion for GitHub failures,
+  broad home-path refusal, failure/stale action counts, and stale filtering that
+  retains blocked rows.
+- PASS: stacked `make check` passed with the worktree package completing in
+  77.044 seconds; stacked `make test-race` passed in 84.952 seconds.
+- PASS: stacked lint reported zero findings; release configuration, all six
+  snapshot archives, manpage lint, Gitleaks scans, and govulncheck passed.
+- PENDING: install the stacked exact head and rerun hosted PR validation.
 
 ## NOTES
 
@@ -139,3 +177,5 @@ nonzero command error.
   merged feature 0004 on `origin/main`.
 - 2026-08-24: PR #12 delivered ready for review after local, race, security,
   release, installation, and hosted validation passed.
+- 2026-08-24: User-requested failure triage and STALE review were stacked onto
+  the existing GH-11/PR #12 delivery lane with no new issue or branch.

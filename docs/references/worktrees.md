@@ -210,6 +210,13 @@ then identify the exact operation, repository/path, and sanitized error before
 the terse aggregate nonzero command error. Discovery and GitHub failures already
 shown before selection are not repeated in this completion block.
 
+Use `[f] address failures` to retry the read-only report or add selected exact
+retired paths to sweep exclusions through a full YAML diff and confirmation.
+This is discovery triage, not filesystem or repository repair: it never deletes
+an orphan directory or rewrites GitHub identity. Use `[s] review STALE` to open
+the selector with only age-stale rows. Protected/unproven rows remain blocked;
+age never grants removal authority.
+
 The counted action menu uses `Remove Ready` and `Merged + Local Files`
 terminology consistently with the report. The interactive selector uses arrows or `j`/`k`, Space, `/` filtering, `s`
 sorting, `e` explanation, Enter review, and a second Enter confirmation. Human
