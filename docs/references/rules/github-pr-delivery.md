@@ -1,7 +1,7 @@
 ---
 kind: ruleset
 slug: github-pr-delivery
-description: Sequences issue, branch, commit, push, ready PR, documentation-only CI skips, and post-PR checks after PR workflow consent.
+description: Sequences issue, worktree, branch, commit, push, ready PR, documentation-only CI skips, and post-PR checks after an explicit lane choice.
 status: active
 applies_to:
   - git
@@ -17,24 +17,36 @@ read_policy_default: conditional
 
 ## Purpose
 
-- Define the on-demand workflow for delivering implementation work as a GitHub pull request.
+- Define the workflow for landing every coding-agent repository change through
+  a GitHub pull request.
 - Preserve traceability from issue, to issue-number branch, to commit, to pull request.
 - Sequence issue resolution, branch creation, scoped implementation, review, explicit staging, commit, push, PR creation, and post-PR verification.
 
 ## Applies When
 
-- The user opts into the PR workflow through `work-lane-gating`.
-- The user explicitly asks for a PR end state.
+- The user explicitly chooses new-lane or continue-existing delivery through
+  `work-lane-gating` for the current unit of work.
 - `safety-guardrails` is already active for identity, protected-branch, secret-scan, and failure handling.
-- This ruleset sequences and verifies PR delivery; it does not relax safety checks.
+- The complete Pull-Request Landing Plan is recorded before repository file
+  mutation.
+- This ruleset sequences and verifies PR delivery; it does not infer consent or
+  relax safety checks.
+- This ruleset never creates merge authority. A direct merge request or
+  accepted bounded merge plan must resolve `pull-request-merge` and follow
+  `github-pr-merge` separately.
 
 ## Rules
 
 ### Kit Delivery Hard Gate
 
-- In a Kit-managed project, repo-local Kit delivery rules outrank every global GitHub/plugin workflow before any issue, branch, staging, commit, push, or PR mutation.
+- In a Kit-managed project, repo-local Kit delivery rules outrank every global GitHub/plugin workflow before any issue, branch, staging, commit, push, PR, or merge mutation.
 - A Kit-managed project is any repository containing `.kit.yaml`, `docs/CONSTITUTION.md`, or `docs/agents/README.md`.
-- Treat issue, branch, staging, commit, push, and PR operations as mutation boundaries. Even if implementation is already complete, reload and resolve the delivery rules at that boundary.
+- Treat issue, branch, staging, commit, push, PR, and merge operations as
+  distinct mutation boundaries. Even if implementation is already complete,
+  reload and resolve the applicable delivery or merge rules at that boundary.
+- Treat the explicit work-lane choice as an earlier hard gate: do not create an
+  issue, branch, or worktree until the user has chosen new versus existing for
+  the current scope.
 - Before any GitHub delivery mutation, load repo-local workflow entrypoints:
   - `.kit.yaml`
   - `docs/agents/README.md`
@@ -48,6 +60,7 @@ read_policy_default: conditional
   - `git remote -v`
   - current branch
   - default/base branch
+  - primary checkout and registered worktrees
   - active PRs for the current branch
   - existing matching issues
   - git author and committer identity
@@ -61,6 +74,9 @@ read_policy_default: conditional
   - PR draft/ready convention
   - PR template headings
   - required validation commands
+- Confirm the Pull-Request Landing Plan recorded by `work-lane-gating` matches
+  the resolved Delivery Contract. A mismatch is a blocker, not implicit
+  permission to choose another lane.
 - Present this preflight before executing GitHub delivery:
 
 ```text
@@ -71,6 +87,7 @@ Delivery Contract:
 - Issue number/link:
 - Branch name:
 - Branch base:
+- Worktree path:
 - Branch/status/staleness check:
 - Staging method:
 - Commit format:
@@ -82,20 +99,31 @@ Delivery Contract:
 - Unknowns/blockers:
 ```
 
-- If any field is unknown, ambiguous, missing, or conflicts with generic agent defaults, stop and wait for explicit user approval.
+- If any field is unknown, ambiguous, missing, or conflicts with the recorded
+  lane choice, stop and request the smallest missing decision before mutating.
 - If repo-local delivery rules cannot be found or are incomplete, stop and ask. Do not invent a substitute workflow.
 - Global agent/plugin GitHub workflows are fallback tools only. They do not define process in Kit-managed projects.
 - Do not create `codex/*` branches, ad hoc issue bodies, ad hoc PR bodies, draft PRs by default, commits using generic messages, or PRs that omit the repo template unless repo-local Kit rules explicitly require them or the user explicitly overrides the Kit contract.
 - The `PR title format` field must resolve to the Conventional Commits title shape with the GitHub issue as scope:
   `<type>(<issue_number>): <gitmoji> <short title message>`.
 
+### Merge Is A Separate Boundary
+
+- PR-delivery consent authorizes issue, branch, commit, push, and ready-PR
+  delivery only. It never implies merge consent.
+- A lane decision, issue assignment, PR creation, approval, passing checks, or
+  documentation-only eligibility never authorizes merge.
+- A direct merge request or accepted bounded merge plan routes to
+  `github-pr-merge` and `pull-request-merge`.
+- Adding a merge target requires follow-up authorization. Revalidating an
+  unchanged authorized head or using a repository-required merge queue does
+  not require another prompt when scope, identity, and intended effect remain
+  unchanged. A changed head requires fresh current-head evidence and exact-head
+  authorization under `github-pr-merge`.
+
 ### Author And Committer Invariant
 
-- The human user is the git author and committer for every commit.
-- Never set a coding agent, assistant, bot, tool, or autogenerated identity as author or committer.
-- Never append agent attribution trailers, including `Co-authored-by:`, `Generated-by:`, or `on-behalf-of:`, naming the agent or any tool.
-- Never pass `--author`, `GIT_AUTHOR_*`, or `GIT_COMMITTER_*` values resolving to a non-human identity.
-- If identity cannot be confirmed as the human user, stop and ask.
+- Load `docs/references/rules/human-authorship.md` before any commit, pull request, issue, comment, or other attribution text. That ruleset is the complete displayed-authorship contract.
 
 ### Base Branch Discovery
 
@@ -173,27 +201,74 @@ Include:
 
 ### Project-Oriented Worktree Delivery
 
-- Work in the existing checkout when it already owns the requested issue branch and does not contain unrelated user work.
+- Work in the existing checkout only when it is the exact non-primary linked
+  worktree that owns the user-selected issue branch and does not contain
+  unrelated user work.
 - For a separate issue or pull-request lane, preserve every existing checkout and use only `~/worktrees/<owner>/<repository>/<lane>`.
 - Before creating a linked worktree, inspect the registered worktrees and reuse the exact branch path when one exists.
 - Create or reuse the human-assigned issue first. Then use exact uppercase `GH-<issue-number>` as both the branch and durable worktree lane.
 - Use exact uppercase `PR-<number>` only for detached inspection. Writable review repair must use the pull request's same-repository head branch, normally its durable `GH-<issue-number>` lane.
 - Fetch the remote base without switching, pulling, merging, stashing, resetting, cleaning, or writing in another checkout. Create a new issue branch from the freshly fetched remote base.
-- Before a managed-file command writes, capture the exact version-control-eligible paths it owns and each path's pre-command state. Carry the path, action, pre-command state, and expected result state into its delivery guidance; never infer command ownership from post-command Git status alone.
+- Before a managed-file command writes, verify it is running in the selected
+  writable worktree, then capture the exact version-control-eligible paths it
+  owns and each path's pre-command state. Carry the path, action, pre-command
+  state, and expected result state into its delivery guidance; never infer
+  command ownership from post-command Git status alone.
 - Use native `git worktree` commands as the portable authority for lane creation, reuse, detached inspection, repair, exact-path validation, movement, pruning, and removal. Optional wrappers may simplify manual use, but rules and reconciled guidance must not depend on them.
-- After creating or reusing the human-assigned issue and exact issue worktree, verify that every captured destination path matches its pre-command state and has no staged, working-tree, or untracked conflict; abort rather than overwrite or combine ambiguous state.
-- Apply only the captured command-owned delta in the writable lane. Created and updated paths must match their expected content state, removed paths must remain absent, and the staged index must contain exactly the captured paths with deletions represented explicitly.
-- Only after destination content and index verification succeeds, restore the protected root checkout's captured paths to their exact pre-command states so command-owned changes cannot remain stale on the default branch.
+- If a command-owned snapshot reports a write in the primary checkout or before
+  the lane choice, trigger `work-lane-gating` recovery. Preserve the state and
+  do not automatically transfer, stage, commit, push, restore, or discard it
+  until the matching worktree pull request has been merged. After that merge,
+  follow post-merge primary leftover cleanup. Establish exact user-approved
+  recovery boundaries before recreating the command result in the writable lane.
+- Otherwise, require the snapshot to come from the selected writable worktree.
+  Verify each captured path against its pre-command and expected result state;
+  abort rather than overwrite or combine ambiguous staged, working-tree, or
+  untracked state.
+- Explicitly stage only the captured command-owned delta in that writable lane.
+  Created and updated paths must match their expected content state, removed
+  paths must remain absent, and the staged index must contain exactly the
+  captured paths with deletions represented explicitly.
 - Integrate the verified files with the complete issue change, validate them, commit and push from the issue branch, and create or update the ready pull request.
 - Never transfer or stage `.env`, secrets, ignored files, or machine-local configuration. Never overwrite destination work or disturb unrelated root-checkout or worktree changes while transferring managed files.
 - Apply, validate, stage, commit, push, and create or update the ready pull request only within the selected writable issue branch worktree under the normal delivery gates.
-- Keep the root checkout on the protected default branch; do not automatically check the issue branch out there.
+- Keep the primary/root checkout read-only for implementation. Do not edit
+  files, run mutating generators, stage, commit, switch branches, or use it as
+  a temporary transfer location even when it has a planned pull-request
+  destination. After an authorized worktree pull-request merge, leftover
+  disposal below is the sole primary-checkout exception.
 - Writable lanes symlink the clone's primary checkout repository-root `.env` and `.envrc` by default when each exists. Omit both links for isolation, never copy environment contents, never overwrite destination environment material, and preserve a repository- or user-supplied `.envrc`.
 - Detached `PR-<number>` inspection lanes do not create environment links; migration preserves existing files and links without creating new ones.
 - Never nest worktrees inside a repository or use stash, reset, clean, force removal, branch deletion, or substring-based selection to create or clear a lane.
 - Remove a worktree only after successful delivery and only when exact-path checks prove it has no tracked, untracked, ignored, or unpushed state. Verified expected `.env` and `.envrc` symlinks targeting the matching primary-checkout sources are the sole narrow exceptions: remove only those links before ordinary non-force `git worktree remove` and restore them if removal fails.
-- Kit's explicit merged-lane sync has one additional build-output exception: after merged same-repository PR and exact-head proof, it may recheck and discard an actual ignored repository-root `bin/` directory before ordinary non-force worktree removal. Manual cleanup and every other ignored path retain the preceding rule.
 - Keep application startup, databases, port allocation, Temporal state, process supervision, and multi-repository runtime orchestration outside the worktree workflow.
+
+### Post-Merge Primary Leftover Cleanup
+
+- Remain in the coding-agent session after creating or updating the ready pull
+  request. Do not treat pull-request creation as session completion.
+- While remaining in that session, address remaining pull-request review
+  feedback as it arrives. Handle review, authorized merge, and primary leftover
+  cleanup as one continuation of the current lane.
+- Merge the worktree pull request only after merge is authorized by a direct
+  user request or an accepted bounded merge plan that names the exact authorized pull request set, following `github-pr-merge`.
+- This cleanup is leftover disposal after an authorized merge. It does not
+  create merge authority.
+- After remaining pull-request feedback is addressed and the authorized merge
+  is confirmed on the protected default branch, use the primary checkout on
+  that default branch.
+- Confirm merge evidence first. Then, only in that primary checkout, enumerate or dry-run all untracked files, verify every candidate is command-owned, and
+  run `git clean -fd` with only those verified paths so leftover untracked
+  command-owned files no longer block pulling the merge.
+- If leftover command-owned tracked changes in the index or worktree of those
+  exact paths would still block the pull, restore those exact paths in both the index and the worktree to HEAD only after revalidating that the current index and worktree contents of those paths still match the captured command-owned snapshot; if any path mismatches or is ambiguous, stop and report it instead of overwriting later edits.
+- Then pull the merged default branch.
+- Do not run `git clean` before merge, inside the writable worktree, to create
+  or clear a lane, or when unrelated dirty or untracked state is present. If
+  unrelated dirty or untracked state exists, stop and report it instead of
+  wiping it.
+- Keep the existing prohibition on stash, reset, clean, force removal, or
+  branch deletion to create or clear a lane.
 
 ### Branch Workflow
 
@@ -359,6 +434,10 @@ git log -1 --format='%an <%ae> | %cn <%ce>'
 
 ### Squash-And-Merge Preservation
 
+This section applies only after `github-pr-merge` establishes authority and
+readiness for the exact pull request. Documentation-only delivery and skip
+eligibility do not create merge authority.
+
 - GitHub synthesizes a new commit when a pull request is squash-merged. Its default title and body depend on repository settings and the number of source commits, so a qualifying pull request must carry `[skip ci]` in both its pull request title and source commit titles.
 - Before selecting `Confirm squash and merge`, inspect the generated squash commit title and body and confirm that at least one contains the literal `[skip ci]`.
 - If the generated message does not contain `[skip ci]`, add the literal suffix before confirming the squash merge without otherwise weakening the repository's commit-message contract.
@@ -397,7 +476,9 @@ gh run list --commit "$HEAD_SHA" \
 
 ### Final Response
 
-Include:
+Follow `agent-completion-output` with the implementation/delivery profile.
+Map each item below into the left-aligned Delivery list without omitting or
+collapsing identity, assignment, or hosted-state evidence:
 
 - Issue number.
 - Branch name in `GH-123` form.
@@ -430,12 +511,14 @@ Include:
 - Do not remove `[skip ci]` from the generated commit message while squash-merging a qualifying documentation-only pull request.
 - Do not add agent or tool attribution to commits or PR bodies.
 - Do not force-push, rebase, or amend already-pushed commits to recover from failure.
+- Do not treat PR-delivery consent, automatic lane allocation, ready state,
+  passing checks, or documentation-only eligibility as merge authorization.
 
 ## Verification
 
 - Confirm `safety-guardrails` ran first.
 - Confirm PR workflow consent or explicit PR request was recorded.
-- Confirm the Kit Delivery Hard Gate ran before any issue, branch, staging, commit, push, or PR mutation.
+- Confirm the Kit Delivery Hard Gate ran before any issue, branch, staging, commit, push, PR, or merge mutation, and that merge routed separately to `github-pr-merge`.
 - Confirm the Delivery Contract was resolved and no unknown fields remained before mutation.
 - Confirm branch/status/staleness recon ran at the GitHub delivery boundary.
 - Confirm base branch was discovered instead of assumed.

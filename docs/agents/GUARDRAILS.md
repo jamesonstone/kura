@@ -9,20 +9,105 @@
 - Never mix multiple features in one `docs/specs/<feature>/` directory
 - Update docs first when reality diverges from documented behavior
 
+## Multi-Agent Orchestration Evaluation Hard Gate
+
+Before a coding agent finalizes any native implementation plan for a new
+feature, a substantial architectural or behavioral change, or a multi-file
+refactor, it must:
+
+1. Load `docs/references/rules/agent-team-orchestration.md` and
+   enter its `CAPABILITY_NEGOTIATING` state.
+2. Evaluate whether the work benefits from multi-agent or parallel
+   decomposition using that rule's lifecycle and semantic capability
+   profiles (`architect`, `orchestrator`, `mapper`,
+   `specialist`, `precision`, `verifier`).
+3. Record the decision before the plan is finalized:
+   - a multi-lane Agent Team Plan / Lane Manifest, using that rule's
+     existing artifact; or
+   - `single-lane, because <reason>`, using that rule's existing
+     single-lane criteria: trivial, tightly coupled, high-overlap, requires
+     continuous design judgment, the user requested single-agent execution,
+     or the active host does not confirm separate execution.
+
+- This gate is mandatory even when the recorded answer is single-lane. A
+  single mechanical edit, a direct question, or read-only research that
+  never forms an implementation plan does not trigger it.
+- This gate fires during native plan formation, before the plan is
+  finalized. It precedes the Work Lane Mutation Hard Gate below, which fires
+  later, before the first repository mutation.
+- Never treat this evaluation as permission to force parallel execution on
+  work that does not need it; a recorded single-lane decision remains a
+  fully valid outcome.
+
+---
+
+## Work Lane Mutation Hard Gate
+
+Before a coding agent performs any repository file or delivery mutation, it
+must:
+
+1. Load `docs/agents/GUARDRAILS.md` and
+   `docs/references/rules/work-lane-gating.md`.
+2. Complete read-only safety recon, including the current branch, dirty state,
+   remote, active pull requests, registered worktrees, and exact primary
+   checkout.
+3. Ask exactly:
+
+   > Before I make any repository changes, should I create a new GitHub issue, `GH-<issue-number>` branch, canonical worktree, and pull request for this work, or continue in the existing branch/worktree and land it through that branch's pull request?
+
+   Interpret the response's first standalone token after trimming surrounding
+   whitespace, case-insensitively: `c` means continue existing, while
+   `n` or `y` means new lane. When shorthand leads a longer response,
+   shorthand is the primary lane choice and the remaining text is supplemental
+   lane instructions. Treat the case-insensitive full-form answers `new lane`, `new work lane`, `new worklane`, and `new worktree` as the new-lane choice:
+   create or reuse the human-assigned GitHub issue, exact `GH-<issue-number>` branch, canonical non-primary worktree, and ready pull-request plan;
+   ambiguous or contradictory responses fail closed.
+4. Wait for the user's explicit choice unless that exact choice is already
+   recorded for the same unit of work.
+5. Record a Pull-Request Landing Plan with the repository, issue, branch,
+   non-primary worktree, protected base, and create-or-update PR target, then
+   verify that plan still matches before every mutation.
+
+- This gate covers source, tests, documentation, specs, plans, generated files,
+  configuration, and every other repository file. It also covers every delivery
+  mutation, including issue, branch, staging, commit, push, worktree, and
+  pull-request mutations, as well as merges. Read-only discovery and planning
+  may precede it; write-capable commands such as `kit spec`,
+  `kit init`, and `kit reconcile` may not.
+- Never infer the choice from a clean default branch, an issue reference, or a
+  generic request to produce a pull request.
+- For a new lane, create or reuse one human-assigned issue, exact
+  `GH-<issue-number>` branch, canonical linked worktree at
+  `~/worktrees/<owner>/<repository>/GH-<issue-number>`, and one ready-PR plan
+  before editing files.
+- Continue existing work only after proving the non-protected branch, its exact
+  owning linked worktree, issue scope, protected base, and create-or-update PR
+  target. Reuse an existing pull request; do not create a second delivery lane.
+- Treat the clone's primary/root checkout as read-only for coding-agent work,
+  regardless of branch or cleanliness. Never edit there with a plan to move the
+  diff later.
+- One choice covers directly required tests, documentation, validation fixes,
+  and delivery. Ask again for materially new or tangential scope.
+- If an ungated or primary-checkout change is detected, stop and preserve it.
+  Do not stage, commit, push, stash, reset, clean, discard, or silently transfer
+  it; follow `work-lane-gating` recovery.
+
+---
+
 ## GitHub Delivery Hard Gate
 
-When the user asks to create or mutate an issue, branch, commit, push, or pull request in a Kit-managed project, stop before any GitHub or git mutation.
+When the user asks to create or mutate an issue, branch, commit, push, pull request, or merge in a Kit-managed project, stop before any GitHub or git mutation.
 
 A Kit-managed project is any repository containing `.kit.yaml`, `docs/CONSTITUTION.md`, or `docs/agents/README.md`.
 
-Before creating or mutating issues, branches, staging, commits, pushes, or PRs, agents must:
+Before creating or mutating issues, branches, staging, commits, pushes, PRs, or merges, agents must:
 
 1. Load repo-local workflow entrypoints:
    - `.kit.yaml`
    - `docs/agents/README.md`
    - `docs/agents/GUARDRAILS.md`
    - `docs/agents/TOOLING.md`
-   - any referenced `docs/references/rules/*` rulesets relevant to git, GitHub, branches, issues, commits, or PRs
+   - any referenced `docs/references/rules/*` rulesets relevant to git, GitHub, branches, issues, commits, PRs, or merges
    - `.github/pull_request_template.md` and issue templates when present
 2. Run delivery recon and report the result:
    - `pwd`
@@ -90,6 +175,28 @@ Do not create:
 
 unless the repo-local Kit rules explicitly require them or the user explicitly overrides the Kit contract.
 
+## GitHub Merge Authorization Hard Gate
+
+- Merge is a distinct mutation boundary. PR-delivery consent, automatic lane allocation, approval, check success, subagent assignment, and a program ledger never imply merge consent.
+- Merge only after a direct user request or accepted bounded merge plan names the exact authorized PR set.
+- Before any merge or merge-queue mutation, resolve `pull-request-merge` and load `docs/references/rules/github-pr-merge.md`.
+- Reconcile the authorization source, authenticated actor, expected head/base, repository merge policy, current reviews/checks, dependencies, and infrastructure or deployment effects before every wave.
+- Only exact current `MERGE_READY` nodes may merge. Pending, missing, stale-head, or policy-ineligible skipped checks are not passing.
+- Revalidating an unchanged authorized head does not require another prompt. A changed head invalidates readiness and prior merge authority; merging it requires fresh current-head evidence and explicit exact-head authorization. Adding a target or materially changing actor, method, environment, infrastructure effect, or recovery requires follow-up authorization.
+- Never bypass protection, reviews, required checks, a merge queue, repository policy, or identity safeguards.
+- Report merge, hosted workflow, deployment/runtime, and production evidence as separate claims.
+
+## Deletion Safety Hard Gate
+
+- Before designing deletion behavior or deleting persistent project, user, business, or external-system state, load `docs/references/rules/deletion-safety.md`.
+- An unqualified delete means soft delete: use a reversible lifecycle state with a supported, authorized, and tested restore path. Task-owned ephemeral scratch that never became authoritative state is outside this retained-state definition; ambiguity remains covered.
+- Treat purge, destroy, force deletion, empty-trash operations, destructive replacement, history rewrite, retention expiry, backup or snapshot deletion, cryptographic erasure, and irreversible cascades as hard delete.
+- Make the normal product and operational path soft-delete by default. Keep hard delete as a separate privileged, auditable, server-enforced action; a client prompt or `force` flag alone is insufficient.
+- Before any hard delete, resolve and present the exact targets, or a bounded selector first resolved to the exact current target set with its current count and materialized target IDs or an immutable snapshot/version token, environment, cascades, why soft delete is insufficient, the loss of restore, backup state, retention or legal impact, and verification plan.
+- After that outline, obtain a specific manual confirmation from the human for those exact current targets. Initial requests, general task or plan approval, automation, retention schedules, prior soft-delete approval, and broad cleanup language do not count.
+- Bind confirmation to the actor, action, exact targets or immutable snapshot/version, environment, and consequences. Immediately before execution, compare the current target set or version with the confirmed snapshot; any difference requires a new outline and confirmation.
+- Preserve stricter repository, legal, privacy, security, infrastructure, and provider controls. One post-outline confirmation may satisfy multiple deletion gates only when the combined outline contains every required field.
+
 ## Infrastructure Change Approval Hard Gate
 
 - Before mutating public-cloud resources, Kubernetes resources or cluster state, or infrastructure-as-code source, configuration, or state, load `docs/references/rules/infrastructure-change-approval.md`.
@@ -103,14 +210,26 @@ unless the repo-local Kit rules explicitly require them or the user explicitly o
 
 ## AWS Context Hard Gate
 
-When .kit.yaml defines an enabled aws context, agents must:
+Before AWS-dependent work, load `docs/references/rules/aws-agent-toolkit-guidance.md` and use its current AWS skill, official documentation, AWS MCP Server or CLI fallback, identity, infrastructure-approval, and secret-safety routing; repo-local Kit gates remain authoritative. When .kit.yaml defines an enabled aws context, agents must:
 
 1. Run kit aws verify before the first AWS-dependent command in the task.
 2. Run kit aws verify again immediately before any command that can mutate AWS resources or deploy through AWS-backed tooling.
-3. Treat the returned account ID and ARN as authoritative. A profile name alone is not proof of identity because environment credentials can change resolution.
-4. Use the verified configured profile explicitly for AWS CLI, SDK, Terraform, CDK, deployment, and project scripts where supported.
+3. Treat the returned account ID, ARN, and Region as authoritative. A profile name alone is not proof of identity because environment credentials can change resolution.
+4. Use the verified configured profile and Region explicitly for AWS CLI, SDK, Terraform, CDK, deployment, and project scripts where supported.
 5. Stop on missing AWS CLI, expired or unavailable credentials, incomplete .kit.yaml AWS fields, or an account mismatch. Read .kit.yaml and ask the user when the intended context remains ambiguous.
 6. Never fall back to default, another discovered profile, or ambient credentials after verification fails.
+
+## Agent Completion Output Contract
+
+- Before a terminal task response, load `docs/references/rules/agent-completion-output.md` when present. This contract does not apply to progress commentary or focused clarification questions.
+- Make the first human-readable line `# PASS|PARTIAL|BLOCKED|FAIL — <one-sentence outcome>`. A required host wrapper may surround the response, but no human-readable preamble may precede the status.
+- Immediately follow with a prioritized action list ordered Blocker, Incomplete, Next, Optional, then None; every PASS includes a None item.
+- Make required follow-ups copy-ready. Never leave Why or Continue with blank, and never hide blockers or incomplete work below completed detail.
+- Use PASS only for complete scope and required validation, PARTIAL for usable incomplete work, BLOCKED for a specific external dependency, and FAIL for an unresolved known failure without an external stopping dependency.
+- Preserve native evidence states such as PENDING, UNKNOWN, SKIPPED, and NOT_APPLICABLE literally.
+- After the action list, use left-aligned headings and CommonMark list or key/value blocks. Do not use a Markdown pipe table unless a higher-priority schema requires it.
+- Select one primary profile from the requested deliverable: implementation, research, diagnosis, planning, validation, review, operations, coordination, or fallback. Start each detail item with a short bold lead label and put long rationale on indented continuation lines.
+- Preserve every field required by active delivery, validation, repository-memory, orchestration, program, and environment contracts inside the canonical profile blocks.
 
 ## Completion Bar
 
@@ -148,6 +267,7 @@ When .kit.yaml defines an enabled aws context, agents must:
 - Never copy environment contents or overwrite destination environment material; preserve a repository- or user-supplied `.envrc`, and remember that direnv approval remains path-specific; keep runtime services, databases, ports, Temporal state, process supervision, and sibling repositories outside the worktree workflow
 - Resolve all in-scope issues autonomously and continue until the goal is fully complete or a genuine blocker remains; diagnose before retrying, preserve target and scope, and verify the recovered state
 - Do not ask for routine approval to switch supported tools, including authenticated `gh`, when the authorized mutation is unchanged
+- Follow `docs/references/rules/deletion-safety.md` before designing deletion behavior or deleting persistent project, user, business, or external-system state; default to soft delete and obtain post-outline specific manual confirmation before every hard delete
 - Outside explicit repo-local approval gates, ask permission only before large-scale deletion or deleting sensitive files
 - Treat missing credentials, ambiguous identity or target, conflicting user-owned changes, and required external authorization as blockers requiring the smallest missing input, not as routine retry-permission requests
 - Do not run `coderabbit --prompt-only` unless explicitly requested or approved

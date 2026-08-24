@@ -50,6 +50,9 @@ deployment environment or external integration for a project that has none.
 
 ### Confidence, Not Certainty
 
+- Follow `agent-completion-output` for terminal reporting. A validation task
+  uses its validation/testing profile; an implementation task carries the same
+  literal evidence in its left-aligned Validation list.
 - Treat “near 100% correctness” as a risk-based confidence objective backed by
   comprehensive evidence, not as a mathematical or absolute guarantee.
 - Map changed behavior and acceptance criteria to the narrowest tests that can
@@ -83,6 +86,10 @@ deployment environment or external integration for a project that has none.
   assertions, or permanent skips.
 - During development, run focused tests for fast feedback. Before handoff, run
   the complete applicable code-level suite and record any genuine blocker.
+  This default may be superseded only by an active, explicitly recorded
+  `docs/references/rules/deadline-mode.md` authorization; supersession still
+  requires reporting deferred or reduced-scope validation literally, per
+  `agent-completion-output`, never as complete.
 
 ### Pull-Request CI
 
@@ -104,6 +111,31 @@ deployment environment or external integration for a project that has none.
 - Upload CI-generated high-level run directories as workflow artifacts.
   Never commit raw run evidence or let CI automatically edit the tracked
   status map.
+
+### Merge Readiness
+
+Classify each authorized pull-request node from exact current-head evidence:
+
+- `MERGE_READY`: every required pre-merge gate has acceptable, attributable
+  evidence for the expected head, base, target, actor, and repository policy;
+- `BLOCKED`: a required gate failed or an explicit dependency or approval is
+  unmet; or
+- `UNKNOWN`: evidence is missing, stale, unavailable, ambiguous, or cannot be
+  attributed to the current head or target.
+
+Only `MERGE_READY` may enter a merge frontier. Never treat these as passing:
+
+- pending checks;
+- missing expected checks;
+- skipped checks without verified policy eligibility;
+- checks from an earlier head;
+- local tests substituted for required hosted checks; or
+- successful merge as deployment, runtime, integration, or production
+  evidence.
+
+Head or base drift invalidates readiness and requires revalidation. Preserve
+local, hosted, merge, deployment, runtime, and production results as separate
+claims.
 
 ### High-Level Suite Layout
 
@@ -277,6 +309,11 @@ kit-e2e-<project>-<environment>-<run-id>-<resource>[-<ordinal>]
 - Operate only on synthetic resources carrying the execution's exact run ID.
   Cleanup must select both the `kit-e2e-` marker and exact run ID; a broad
   prefix alone is never deletion authority.
+- Follow `deletion-safety` for cleanup. Prefer a recoverable soft-delete,
+  quarantine, or provider-native recovery state. When the platform exposes
+  only hard deletion, inventory the exact created resources and obtain the
+  specific post-outline manual confirmation before purging them; pre-run test
+  approval or a generic cleanup policy does not count.
 - Record every created resource and the cleanup outcome in immutable evidence.
 - Never use customer data, reset production state, mutate infrastructure or
   shared configuration, weaken authentication, change unrelated records, or
@@ -306,6 +343,8 @@ kit-e2e-<project>-<environment>-<run-id>-<resource>[-<ordinal>]
   `tests/live-integration`.
 - Claiming 100 percent correctness, production validation, or hosted CI success
   from partial or unobserved evidence.
+- Treating pending, missing, stale-head, or policy-ineligible skipped checks as
+  merge-ready, or substituting local tests for required hosted checks.
 - Running only happy paths or using line coverage as the sole quality signal.
 - Hiding flaky tests with retries, long sleeps, weak assertions, or permanent
   skips.
@@ -318,6 +357,8 @@ kit-e2e-<project>-<environment>-<run-id>-<resource>[-<ordinal>]
   cleanup preflights pass.
 - Cleaning by broad prefix, touching unrelated records, changing
   infrastructure, or weakening authentication.
+- Treating test completion, exact-run ownership, or an expiry timestamp as
+  authority for unattended hard deletion.
 - Calling a read-only smoke probe complete end-to-end coverage.
 - Creating fake production suites for libraries or other non-deployable
   projects.
@@ -342,6 +383,8 @@ kit-e2e-<project>-<environment>-<run-id>-<resource>[-<ordinal>]
   cleanup proof.
 - Confirm unavailable safe production writes produce read-only `PARTIAL`
   evidence and non-deployable projects use `NOT_APPLICABLE`.
+- Before merge, confirm only exact current-head `MERGE_READY` nodes enter the
+  frontier and that `BLOCKED` and `UNKNOWN` remain distinct.
 - Run the project commands documented in `docs/references/testing.md` and
   record any skipped or blocked validation.
 

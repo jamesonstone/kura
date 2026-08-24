@@ -1,5 +1,11 @@
 # Tooling
 
+## Kit Evidence Sequence
+
+- Use `kit capabilities <command> --json` when side effects are not already established.
+- Resolve `kit context resolve --workflow <slug> --json` before coding-agent work and load the selected local evidence.
+- Rerun resolution after material scope changes; never treat resolved JSON as a new source of truth.
+
 ## Skills
 
 - Repo-local canonical skills live under `.agents/skills/*/SKILL.md`
@@ -9,8 +15,8 @@
 ## Command Capability Discovery
 
 - Use `kit capabilities` when choosing among Kit commands and the mutation, network, write, or git behavior is not already obvious.
-- Use `kit capabilities <command> --json` for one command path, including nested paths such as `rules add` or `skill mine`.
-- Use `kit capabilities --search <term> --json` for compact filtered discovery, and `kit capabilities --full --json` only when hidden or deprecated compatibility commands matter.
+- Use `kit capabilities <command> --json` for one command path, including nested paths such as `rules add` or `context resolve`.
+- Use `kit capabilities --search <term> --json` for compact filtered discovery, and `kit capabilities --full --json` only when full details are needed.
 - Treat `kit capabilities` itself as read-only: it does not require a Kit project root and does not load project config, write files, call the network, run subprocesses, or mutate git.
 - In downstream Kit-managed projects, load `docs/references/rules/kit-capabilities-usage.md` when command discovery affects the task.
 - Downstream projects should use `kit capabilities` for command discovery; do not maintain Kit's internal command catalog from a downstream project.
@@ -19,13 +25,48 @@
 
 - Use `kit dispatch` after native planning when an accepted plan needs a safe multi-lane execution topology
 - Load `docs/references/rules/agent-team-orchestration.md` when dispatch, direct subagent execution, or read-only verification topology affects the task
+- When `cross-repository-program-coordination` applies, dispatch only the canonical program ledger's reconciled ready frontier and checkpoint program state after each material transition or handoff
 - Keep one accountable supervisor responsible for scope, integration, validation, evidence, delivery gating, and final reporting
 - Use subagents when the work cleanly separates into low-overlap lanes after discovery
 - Keep single-lane work in one supervisor lane when the task is trivial, tightly coupled, high-overlap, high-ambiguity, cannot spawn subagents, or the user requested single-agent execution
-- Default to at most 3 concurrent lanes; never exceed 4
+- Let the host govern concurrency; never invent a static numeric cap
 - Keep broad or noisy discovery in RLM first; use dispatch or direct subagent execution only after the relevant workstreams are narrow enough to predict overlap
 - Predict overlap conservatively before parallelizing
 - Use read-only verification subagents by default after implementation unless a recorded exception applies
+
+## Capability-Aware Host Adapter
+
+Use `docs/references/rules/agent-team-orchestration.md` for the canonical topology and lifecycle. This adapter translates semantic profiles into controls confirmed by the active host; host and model examples are illustrative, not fixed requirements.
+
+| Profile | Capability target |
+| --- | --- |
+| `architect` | strongest justified architecture and systems reasoning |
+| `orchestrator` | decomposition, dependency, risk, and overlap analysis |
+| `mapper` | efficient read-heavy discovery and codebase mapping |
+| `specialist` | bounded implementation with established contracts |
+| `precision` | high-risk or ambiguous work requiring deeper judgment |
+| `verifier` | fresh independent review with enough strength to challenge the implementation |
+
+### Capability Negotiation
+
+- Before delegation, inspect the host's confirmed child-launch, per-child model and effort, same-agent follow-up, wait or join, live roster or capacity, and fresh-verifier controls. Record confirmed absence as unavailable and unexposed controls as `unknown`.
+- Let the host govern concurrency. When parallel capacity is unconfirmed, do not invent a numeric cap or launch a child to probe it; a confirmed child primitive may still be used serially.
+- If the host exposes no child primitive, use one supervisor with logical lanes. Never report a role prompt, task list, handoff, or manually opened conversation as a child.
+- Resolve profiles against the live roster. Fall back to an equal-or-stronger eligible configuration, then a narrower low-risk lane with stronger verification, then a runtime-selected configuration reported as unverified; otherwise report `BLOCKED`. An unavailable exact user model or effort pin remains blocked until the user changes it.
+- If capacity changes or a spawn fails, keep unadmitted lanes pending, preserve accepted work, recompute the ready frontier from confirmed capacity, and report the failure and degradation. Do not retry indefinitely or let children create descendants.
+- Report actual and logical lanes separately, requested and effective profiles plus model and effort when exposed, confirmed or unknown parallelism, continuity or replacement, verifier independence, and every fallback.
+
+### Illustrative Current Mappings
+
+| Host | Example profile mapping |
+| --- | --- |
+| Codex | strongest justified live configuration for `architect` and `precision`; balanced read-heavy configuration for `orchestrator` and `mapper`; fast configuration for bounded `specialist` work; fresh strong configuration for `verifier` |
+| Claude Code | Opus-class for architecture, precision, and strong verification; Sonnet-class for orchestration, mapping, and general implementation; Haiku-class only for narrow low-risk bounded work |
+| GitHub Copilot | request semantic profiles conservatively and record the effective model or agent controls the host confirms; do not infer child continuation, parallelism, or per-child selection |
+| Warp/Oz | use native parent-child orchestration, continuation, and per-child model controls only when exposed; parallelism and admission remain host-owned |
+| Unknown or single-agent host | serialize logical lanes in the supervisor and perform a distinct self-review, reporting that no child or independent verifier was confirmed |
+
+Current provider references: [Codex subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents), [Claude Code subagents](https://code.claude.com/docs/en/sub-agents), [GitHub Copilot custom-agent invocation](https://docs.github.com/en/copilot/how-tos/copilot-cli/use-copilot-cli/invoke-custom-agents), [Warp orchestration](https://docs.warp.dev/platform/orchestration/), and [Warp project rules](https://docs.warp.dev/agents/capabilities/rules/). Treat these as evidence sources to re-check, not as pinned capability promises.
 
 ## PR Review Feedback
 
@@ -37,22 +78,36 @@
 - If the resolved lane is dirty, Kit asks whether those changes belong in the repair and records `include` or `exclude`, the porcelain status, remote/local head SHAs, and the exact push target in the prompt.
 - Pass `--edit` to review and change the task list in the default editor before copying; `--vim` and `--editor <cmd>` also opt into editing.
 - The generated PR-fix prompt requires a post-push reflection cycle before review-thread resolution: the coding agent must review the pushed diff in context, confirm the PR head still matches the commit it pushed, and only then resolve verified addressed conversations.
-- `kit pr fix` remains prompt-producing: except for preparing the writable worktree and its exact `.env` and `.envrc` links when needed, it does not run the loop agent, edit source files, write `.kit/loops` evidence, stage, commit, push, post PR comments, or resolve review threads.
-- Use `kit loop review` when changed code should be locally reviewed and repaired by the configured loop agent until the final response reports at least 95% correctness and ends with `done`.
-- Without `--pr`, `kit loop review` reviews current-branch changes relative to `origin/main`, falling back to local `main`, plus staged and unstaged changes.
-- Use `kit loop review --pr <target>` when current unresolved CodeRabbit PR feedback should be opportunistically folded into the repair loop; Kit runs the configured agent from the resolved writable PR-head worktree.
-- Use `kit loop review --pr <target> --watch` or `--wait-for-coderabbit` only when finalization should block for CodeRabbit completion.
-- Review prompts use one agent by default; pass `--subagents` to let the parent review agent pre-analyze the diff and choose subagents only when the lanes are clearly independent under `agent-team-orchestration` limits.
-- Use `kit dispatch --loop --pr <target>` when current unresolved CodeRabbit PR review feedback should become a human-reviewed dispatch prompt instead of an agent repair loop.
+- `kit pr fix` remains prompt-producing: except for preparing the writable worktree and its exact `.env` and `.envrc` links when needed, it does not launch an agent, edit source files, stage, commit, push, post PR comments, or resolve review threads.
+- Use `kit dispatch --loop --pr <target> --watch` only for bounded expected CodeRabbit intake; waiting is deterministic and model-free.
 - Use `kit dispatch --pr <target> --coderabbit` only when you need raw unresolved CodeRabbit review-thread intake without review-loop watch, classification, or summary behavior.
-- Treat `kit loop review` as local repair only: it may edit files through the configured agent and write `.kit/loops` evidence, but it must not stage, commit, push, post PR comments, or resolve review threads.
 - After fixes or no-op decisions are complete, validation has run, the repair is pushed, and reflection confirms no other code was pushed after the repair commit, resolve matching current unresolved review threads on the PR, including human reviewer and CodeRabbit feedback, with `kit dispatch --pr <target> --resolve --yes`.
 - Resolve only feedback verified as fixed or intentionally no-op; do not resolve unfixed, uncertain, stale, or unrelated feedback.
 - `kit dispatch --pr <target> --resolve --yes` is an explicit GitHub mutation and must not be run speculatively.
 
+## PR Merge
+
+- PR delivery never implies merge consent. A direct user request or accepted bounded merge plan must name the exact authorized PR set.
+- Before any merge or merge-queue mutation, resolve `pull-request-merge` and load `docs/references/rules/github-pr-merge.md`.
+- Merge only exact current `MERGE_READY` nodes from the authorized frontier; revalidate actor, head/base, repository policy, checks, dependencies, and infrastructure effects before every wave.
+- Revalidation and compatible retries do not require another prompt. Material scope expansion does.
+- Report merge, hosted workflow, deployment/runtime, and production evidence separately.
+
+## PR Release Orchestration
+
+- Use `kit pr orchestrate` to turn explicit repository scope into a deterministic dependency-aware release prompt; Kit does not enumerate PRs, merge, deploy, mutate infrastructure, or launch an agent.
+- Use repeatable `--repos` for exact repositories or `--root` for the root and immediate child repositories. Noninteractive use requires one of those scope flags.
+- Use `--dry-run` to inspect resolved configuration provenance and the full prompt without clipboard access.
+- Release agents resolve `release-orchestration` and, before any authorized merge, `pull-request-merge`. Preserve `MERGE_READY`, `BLOCKED`, and `UNKNOWN` literally.
+
 ## Project Worktrees
 
-- Work in the existing checkout when it already owns the requested lane
+- Ask and record the new-lane versus continue-existing choice before any
+  coding-agent repository file or delivery mutation
+- Record the repository, issue, branch, non-primary worktree, protected base,
+  and create-or-update pull-request target before editing files
+- Work in the existing checkout only when it is the exact non-primary linked
+  worktree that owns the user-selected lane
 - For a separate lane, reuse or create `~/worktrees/<owner>/<repository>/<lane>`; never put a worktree inside a repository
 - Use exact `GH-<number>` for durable issue lanes and uppercase detached `PR-<number>` only for temporary pull-request inspection
 - Reuse the pull request head branch for writable repair; never edit the detached `PR-<number>` view
@@ -60,7 +115,10 @@
 - When Kit reports a dirty target lane, ask whether its existing changes belong in the repair and carry that explicit include-or-exclude decision into the generated agent instructions
 - Use native `git worktree` commands as the portable authority for creation, reuse, detached inspection, repair, removal, pruning, and migration; do not require `git-wt`, an alias, or another wrapper
 - Optional wrappers are manual conveniences only and must preserve the same path and safety contract
-- Keep the root checkout on the protected default branch and work directly in the assigned durable lane
+- Treat the primary/root checkout as read-only for coding-agent work regardless
+  of branch or cleanliness; never edit there with a plan to move the diff later
+- Work directly in the user-selected durable lane and re-open the choice before
+  materially new or tangential scope
 - Do not stash, reset, clean, force-remove, or delete a branch to create or clear a worktree
 - Link the primary checkout's `.env` and `.envrc` into writable lanes by default when each exists, using only exact verified symlinks; omit both links when isolation is required
 - Never copy environment contents or overwrite destination environment material; preserve a repository- or user-supplied `.envrc`, and remember that direnv approval remains path-specific; worktree tooling does not manage runtime services, databases, ports, Temporal state, processes, or sibling repositories

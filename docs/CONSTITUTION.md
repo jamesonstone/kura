@@ -18,11 +18,12 @@
 <!-- BEGIN KIT-MANAGED BASELINE RULES -->
 - Treat `docs/CONSTITUTION.md` as the canonical project contract.
 - Keep `AGENTS.md`, `CLAUDE.md`, and `.github/copilot-instructions.md` aligned with the repo-local docs tree.
-- Treat `docs/notes/<feature>` as optional source material, not canonical truth; promote durable decisions into `SPEC.md`, `docs/CONSTITUTION.md`, or durable references.
 - Use native agent planning for research, clarification, design, and implementation planning.
 - Before implementation, inspect code and repository memory; create or adopt `SPEC.md` when material rationale exists.
 - After validation, curate feature rationale, project invariants, reusable practices, and domain knowledge into their scope-appropriate canonical documents.
 - Allow a justified `not required` repository-memory decision when code and tests preserve the complete durable truth.
+- Before a terminal task completion or handoff response, load `docs/references/rules/agent-completion-output.md` and use its literal status, immediate prioritized action list, and primary task profile.
+- Before commit, pull request, issue, comment, or other attribution text, load `docs/references/rules/human-authorship.md`. Only the human user may be displayed as author; do not attribute coding agents, tools, or bots.
 - Keep every version-control-eligible handwritten implementation/source and test file at 300 physical lines or less.
 - Before delivery, audit the complete affected source/test scope; whole-project reconcile and scheduled maintenance audit the entire repository.
 - Exclude documentation files, all `docs/**`, all `.kit/**`, `.kit.yaml`, ignored files, vendored dependencies, and proven generated files.

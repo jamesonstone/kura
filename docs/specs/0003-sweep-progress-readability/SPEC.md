@@ -119,6 +119,16 @@ existing proof or confirmation boundary.
 - GitHub pagination stops and fails closed instead of silently accepting more
   than the supported evidence ceiling.
 
+## DISCOVERIES
+
+- Repository identity is the useful GitHub batching boundary: duplicate local
+  clones can share default-branch and pull-request evidence while retaining
+  clone-specific candidate classification.
+- Global authentication and rate-limit failures must bypass per-repository
+  fallback; otherwise fallback only multiplies an already global failure.
+- TTY progress must stop and clear its stderr line before ordinary report
+  output, not merely use a separate stream, to preserve readable human output.
+
 ## VALIDATION
 
 - PASS: `make check` passed formatting, vet, the complete test suite, and the
@@ -144,6 +154,25 @@ existing proof or confirmation boundary.
 - PASS: PR #8 implementation head `b0fd62f` was ready, `MERGEABLE`, and `CLEAN`; maintainer
   assignment, Validate, Lint, and GoReleaser snapshot checks all completed
   successfully with no review comments or change requests.
+
+## OUTCOME
+
+- Added TTY-only stderr progress across long sweep phases while preserving
+  stable JSON, redirected, persisted, and ordinary report output.
+- Deduplicated GitHub evidence by repository identity and added bounded
+  multi-repository GraphQL batching, pagination, and fail-closed fallback.
+- Added informational calendar-month staleness, compact local-file summaries,
+  consistent terminology, menu counts, and separate action-result totals
+  without changing selection or removal authority.
+- Delivered the validated implementation through GH-7 and ready PR #8.
+
+## REPOSITORY MEMORY
+
+- Retained this V3 spec because progress-output isolation, repository-identity
+  batching, global-failure handling, and informational staleness are material
+  feature rationale not recoverable from isolated code paths alone.
+- Reconciled the implemented decisions, discoveries, validation evidence, and
+  GH-7/PR #8 delivery outcome in this spec.
 
 ## NOTES
 

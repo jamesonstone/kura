@@ -141,6 +141,17 @@ STALE review path without weakening removal authority.
   deletion. Identity correction remains an explicit repository operation.
 - STALE is a selector lens only; existing state-based authority remains final.
 
+## DISCOVERIES
+
+- The pre-apply failure count is the reliable boundary between failures already
+  rendered in the initial report and failures appended during apply.
+- GitHub evidence failures are repository-scoped while exclusions are
+  path-scoped, so selecting an exact failed primary path must include its
+  affected linked-worktree paths.
+- Showing all age-stale candidates in the STALE selector preserves diagnostic
+  visibility; existing selectability rules can keep protected or unproven rows
+  blocked without hiding them.
+
 ## VALIDATION
 
 - PASS: focused real-Git terminal tests prove exact total-failure output,
@@ -175,6 +186,28 @@ STALE review path without weakening removal authority.
   applying any removal.
 - PASS: stacked PR #12 head `21408d0` remained ready, `MERGEABLE`, and `CLEAN`;
   Validate, Lint, and GoReleaser snapshot passed again with no review feedback.
+
+## OUTCOME
+
+- Added a compact interactive completion block that reports successful,
+  partial, and failed apply results before preserving the aggregate nonzero
+  exit for any failure.
+- Added exact sanitized apply-failure rendering without duplicating failures
+  already shown in the initial report.
+- Added guided retry and confirmed exact-path exclusion actions with unsafe
+  broad paths refused, plus a STALE review lens that keeps blocked rows visible
+  without making them selectable.
+- Delivered the validated implementation and stacked follow-up through GH-11
+  and ready PR #12.
+
+## REPOSITORY MEMORY
+
+- Retained this V3 spec because the initial-versus-apply failure boundary,
+  reversible exclusion-policy boundary, and STALE visibility-versus-authority
+  distinction are material feature rationale not recoverable from isolated
+  code paths alone.
+- Reconciled the implemented decisions, discoveries, validation evidence, and
+  GH-11/PR #12 delivery outcome in this spec.
 
 ## NOTES
 
