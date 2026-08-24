@@ -113,6 +113,16 @@ preserving the exact confirmation and immediate local safety boundary.
 - Process inspection remains one bounded global CWD snapshot because recursive
   per-worktree `lsof +D` is both slower and less reliable at fleet scale.
 
+## DISCOVERIES
+
+- The selected-target multiplier was above GitHub batching: rebuilding the
+  complete report per candidate repeated fleet discovery, evidence collection,
+  process inspection, and classification.
+- Set-wide evidence can be refreshed once, but mutable local process, Git
+  registration, head, and status evidence still require checks near mutation.
+- Stable candidate IDs allow missing or drifted targets to fail closed without
+  cancelling independently unchanged targets from the same confirmed set.
+
 ## VALIDATION
 
 - PASS: focused real-Git tests prove two selected worktrees trigger exactly one
@@ -136,6 +146,24 @@ preserving the exact confirmation and immediate local safety boundary.
 - PASS: PR #10 implementation head `9691d64` was ready, `MERGEABLE`, and
   `CLEAN`; maintainer assignment, Validate, Lint, and GoReleaser snapshot checks
   all completed successfully with no review comments or change requests.
+
+## OUTCOME
+
+- Replaced per-candidate report rebuilds with one size-free fleet refresh for
+  the confirmed target set and indexed refreshed candidates by stable ID.
+- Added one fresh set-wide process snapshot plus immediate target-local Git
+  registration, head, and status verification before mutation.
+- Preserved missing, drifted, or newly active targets with exact failures while
+  allowing independently unchanged targets to proceed.
+- Delivered the validated repair through GH-9 and ready PR #10.
+
+## REPOSITORY MEMORY
+
+- Retained this V3 spec because the set-wide versus target-local revalidation
+  boundary and independent fail-closed behavior are material safety and
+  performance rationale not recoverable from isolated code paths alone.
+- Reconciled the implemented decisions, discoveries, validation evidence, and
+  GH-9/PR #10 delivery outcome in this spec.
 
 ## NOTES
 

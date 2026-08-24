@@ -37,6 +37,7 @@
 
 - Code-level and integration tests require no credentials or secrets.
 - Tests use language-managed temporary directories and do not retain synthetic resources.
+- Follow `rules/deletion-safety.md` for cleanup: default retained state to recoverable deletion and require exact post-outline manual confirmation before hard delete
 
 ## Evidence And Retention
 

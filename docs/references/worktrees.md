@@ -3,11 +3,12 @@
 ## Policy Authority
 
 Native `git worktree` commands and ordinary filesystem operations define this
-portable workflow. No Kit-managed rule depends on `git-wt`, `git wt`, a shell
-alias, an editor integration, or another wrapper.
+portable workflow. Kit prepares writable repair lanes through the same native
+operations, but worktree lifecycle policy never depends on an external wrapper,
+alias, editor integration, or plugin.
 
-Optional helpers may make the same workflow more convenient for manual use,
-but they must preserve every path, environment, and safety invariant here.
+Kura's optional `git wt` helper makes the same workflow more convenient for
+manual use while preserving every path, environment, and safety invariant here.
 
 ## Mental Model
 
@@ -19,9 +20,9 @@ stash entries. A worktree protects one checkout from unrelated file and branch
 changes; it is not a second clone or an isolation boundary for shared Git
 state.
 
-Keep the primary checkout on the protected default branch. Agents develop and
-test inside assigned durable lanes, and the same branch must never be checked
-out in two worktrees at once.
+Keep the primary checkout on the protected default branch. Develop and test in
+assigned durable lanes, and never check one branch out in two worktrees at
+once.
 
 ## Canonical Hierarchy
 
@@ -36,8 +37,8 @@ uppercase `GH-<number>`. Detached pull-request inspection lanes use exact
 uppercase `PR-<number>`.
 
 Do not put linked worktrees inside a repository, including under
-`.worktrees/`. External placement prevents recursive tooling, watchers, search,
-backup rules, builds, and cleanup from treating one checkout as another
+`.worktrees/`. External placement prevents recursive tooling, watchers,
+search, backup rules, builds, and cleanup from treating one checkout as another
 checkout's content.
 
 ## Portable Native Git Workflow
@@ -49,16 +50,16 @@ worktrees before creating anything:
 git worktree list --porcelain
 ```
 
-In a terminal, the optional `git wt` helper opens the same colorized selector
-as `git wt list`, with Git's primary worktree pinned at the top and the
-remaining lanes ordered by `LAST UPDATED`. Each timestamp uses the running
-user's local timezone and shows the calendar day plus hour and minute, with no
-seconds. The primary checkout and every `main` branch row use bright magenta
-and carry `[home]` or `[main]` across repositories, keeping them distinct from
-ordinary green clean lanes even when terminal brightness differences are
-subtle. Use arrow keys or Tab to move, Enter to open a child shell in the
-selected worktree, `h` to open the primary worktree immediately, and `q` to
-cancel. The child shell cannot change its parent shell's directory.
+In a terminal, `git wt` opens the same colorized selector as `git wt list`,
+with Git's primary worktree pinned at the top and the remaining lanes ordered by
+`LAST UPDATED`. Each timestamp uses the running user's local timezone and shows
+the calendar day plus hour and minute, with no seconds. The primary checkout and
+every `main` branch row use bright magenta and carry `[home]` or `[main]` across
+repositories, keeping them distinct from ordinary green clean lanes even when
+terminal brightness differences are subtle. Use arrow keys or Tab to move,
+Enter to open a child shell in the selected worktree, `h` to open the primary
+worktree immediately, and `q` to cancel. The child shell cannot change its
+parent shell's directory.
 
 Piped or redirected output remains a plain table. Use `--plain` to request the
 table from a terminal, `--sort updated|state|head|path` to choose another key,
@@ -191,9 +192,9 @@ the destructive review.
 `--auto` removes only `remove-ready` and stale metadata. It never forces,
 deletes local files or divergent commits, deletes a remote branch, fetches,
 updates refs, or fast-forwards a default. Terminal users may explicitly select
-GitHub-merged local-file or divergent lanes. The review lists exact paths, local
-status categories, OIDs, extra commits, approximate reclaimable size, and
-recovery loss. A second Enter confirms the immutable target snapshot; any
+GitHub-merged local-file or divergent lanes. The review lists exact paths,
+local status categories, OIDs, extra commits, approximate reclaimable size,
+and recovery loss. A second Enter confirms the immutable target snapshot; any
 drift aborts and refreshes the report. Only that human-confirmed path may use
 native forced worktree removal or exact local `git branch -D`.
 
@@ -218,11 +219,12 @@ the selector with only age-stale rows. Protected/unproven rows remain blocked;
 age never grants removal authority.
 
 The counted action menu uses `Remove Ready` and `Merged + Local Files`
-terminology consistently with the report. The interactive selector uses arrows or `j`/`k`, Space, `/` filtering, `s`
-sorting, `e` explanation, Enter review, and a second Enter confirmation. Human
-output uses redundant state labels as well as color and honors `NO_COLOR`.
-Versioned JSON and redacted run evidence beneath the XDG state directory expose
-the same deterministic report for an external scheduler.
+terminology consistently with the report. The interactive selector uses arrows
+or `j`/`k`, Space, `/` filtering, `s` sorting, `e` explanation, Enter review,
+and a second Enter confirmation. Human output uses redundant state labels as
+well as color and honors `NO_COLOR`. Versioned JSON and redacted run evidence
+beneath the XDG state directory expose the same deterministic report for an
+external scheduler.
 
 The first entry is Git's primary worktree. Capture its stable physical path for
 environment-link validation:
@@ -272,27 +274,27 @@ git fetch origin "pull/77/head"
 git worktree add --detach "$PR_PATH" FETCH_HEAD
 ```
 
-Detached `PR-<number>` lanes are inspection-only. For repair, resolve the
-pull request's same-repository head branch and reuse or attach that durable
-branch instead.
+Detached `PR-<number>` lanes are inspection-only. For repair, resolve the pull
+request's same-repository head branch and reuse or attach that durable branch
+instead.
 
-## Target-Aware Repair Commands
+## Target-Aware Kit Repair Commands
 
 When a Kit command already identifies a pull request or failed branch, use that
 target to resolve the writable lane automatically. The user does not need to
-navigate to a worktree before running `kit pr fix`, PR-backed dispatch or
+navigate to a worktree before running `kit pr fix`, PR-backed `kit dispatch` or
 review-loop commands, `kit loop review --pr`, or `kit ci --dispatch`.
 
-Resolution must prove the current clone owns the requested repository, use the
-exact same-repository PR head or exact diagnosed branch, and consult
-`git worktree list --porcelain` for registered ownership. It may fetch `origin`
-and add or attach the canonical writable lane, but must not choose by recency,
-substring, fuzzy matching, or interactive selection.
+Resolution proves the current clone owns the requested repository, uses the
+exact same-repository PR head or exact diagnosed branch, and consults
+`git worktree list --porcelain` for registered ownership. It may fetch
+`origin` and add or attach the canonical writable lane, but it must not choose
+by recency, substring, fuzzy matching, or interactive selection.
 
 Before generating or running repair instructions, record the remote target
 head, local `HEAD`, exact worktree path, and push target. If the worktree is
-dirty, show `git status --porcelain` and ask whether the existing changes belong
-in the repair:
+dirty, show `git status --porcelain` and ask whether the existing changes
+belong in the repair:
 
 - `include` makes the existing diff part of the full repair review and
   validation scope.
@@ -307,7 +309,8 @@ and PR delivery retain their explicit gates.
 ## Writable-Lane Environment Links
 
 The clone's primary checkout owns the shared repository-root `.env` and
-`.envrc`. Link each stable source into writable lanes by default when it exists:
+`.envrc`. Link each stable source into writable lanes by default when it
+exists:
 
 ```bash
 resolve_link_target() {
@@ -357,21 +360,21 @@ ensure_environment_link ".env"
 ensure_environment_link ".envrc"
 ```
 
-Reusing a writable lane must repeat each exact source and destination
-validation and create missing links. Omit both links intentionally when
-isolation is required.
+Reusing a writable lane repeats each exact source and destination validation and
+creates missing links. Omit both links intentionally when isolation is
+required.
 
 Never copy environment contents or overwrite destination material. A regular
 destination `.env` and any broken or unexpected environment symlink are
-collisions that must stop the operation. Preserve a regular destination
-`.envrc`, which may be tracked by Git or owned by the user.
+collisions that stop the operation. Preserve a regular destination `.envrc`,
+which may be tracked by Git or owned by the user.
 
 `.envrc` is executable shell configuration. Review the primary source before
 sharing it, and retain direnv's separate path-specific approval by running
 `direnv allow "$WORKTREE_PATH"` after inspecting a newly linked lane. Detached
 PR inspection and migration do not create environment links.
 
-## Inspection, Synchronization, Migration, and Removal
+## Inspection, Pruning, And Removal
 
 Listing is read-only:
 
@@ -393,9 +396,10 @@ operation failure makes the overall command exit nonzero after its complete
 human or JSON report.
 
 `git wt sweep` is the explicit fleet path. Automatic runs retain the ordinary
-non-force guardrails. Its separate terminal-confirmed local-file and local-history
-actions are hard-delete operations: coding agents and unattended automation
-must not invoke those actions, and the selected human target snapshot must be
+non-force guardrails. Its separate terminal-confirmed local-file and
+local-history actions are hard-delete operations governed by
+`rules/deletion-safety.md`: coding agents and unattended automation must not
+invoke those actions, and the selected human target snapshot must be
 revalidated before execution.
 
 Move a registered legacy worktree only after validating its exact source,
@@ -409,11 +413,10 @@ git worktree move "/exact/registered/source" \
 Migration preserves dirty contents and existing environment files or links.
 Never use ordinary `mv`, stash, reset, clean, or force.
 
-Before removal, prove the target is an exact registered path, is not the
-current checkout, has no tracked, untracked, ignored, dirty, or unpublished
-state, and has no unsafe environment material. Verified `.env` and `.envrc`
-symlinks to the matching primary-checkout sources are the sole narrow
-exceptions:
+Before removal, prove the target is an exact registered path, is not the current
+checkout, has no tracked, untracked, ignored, dirty, or unpublished state, and
+has no unsafe environment material. Verified `.env` and `.envrc` symlinks
+to matching primary-checkout sources are the sole narrow exceptions:
 
 1. Verify each environment destination is a symlink whose target matches the
    same name beneath `$PRIMARY_ROOT`.
@@ -423,13 +426,14 @@ exceptions:
 
 Refuse regular ignored environment files, unexpected symlinks, and every other
 dirty, ignored, or unpublished item. A clean tracked `.envrc` remains ordinary
-Git-managed content. Manual `git wt remove` never uses `--force`,
-reset, clean, stash, or branch deletion. Sync uses its stricter merged-PR and
-exact-head proof instead of upstream/ahead proof. It may additionally discard
-only an actual ignored root `bin/` directory when Git reports the exact
-`!! bin/` porcelain record before worktree removal. Nested ignored records such
-as `!! bin/generated/`, nested `*/bin/` paths, symlinks, tracked changes,
-ordinary untracked files, and other ignored paths remain removal blockers. The
+Git-managed content. For manual `git wt remove`:
+Never use `--force`, reset, clean, stash, or branch deletion. Sync uses its
+stricter merged-PR and exact-head proof instead of upstream/ahead proof. It may
+additionally discard only an actual
+ignored root `bin/` directory when Git reports the exact `!! bin/` porcelain
+record before worktree removal. Nested ignored records such as
+`!! bin/generated/`, nested `*/bin/` paths, symlinks, tracked changes, ordinary
+untracked files, and other ignored paths remain removal blockers. The
 disposable build output is not restored if a later operation fails. Only after
 successful worktree removal does sync attempt ordinary local `git branch -d`
 through a task-owned proof ref. Proof creation and cleanup use compare-and-swap

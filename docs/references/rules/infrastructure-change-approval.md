@@ -1,7 +1,7 @@
 ---
 kind: ruleset
 slug: infrastructure-change-approval
-description: Requires one plan-level confirmation and one-pass execution per infrastructure batch, with explicit deletion confirmation.
+description: Requires one plan-level confirmation and one-pass execution per infrastructure batch, with name-aware material AWS targets and explicit deletion confirmation.
 status: active
 registry_scope: downstream
 applies_to:
@@ -41,6 +41,10 @@ read_policy_default: must
   tools.
 - Running a deployment path that directly performs one of those covered
   mutations.
+- Merging a pull request known to trigger deployment, Kubernetes,
+  public-cloud, or infrastructure-as-code mutation. The merge is part of the
+  covered mutation boundary even though the provider mutation occurs
+  indirectly in a workflow.
 
 This rule does not automatically cover adjacent infrastructure SaaS or general
 CI/CD configuration unless the operation directly invokes a covered
@@ -79,10 +83,43 @@ Before the first covered mutation, create one consolidated outline containing:
 The outline may cover multiple providers or tools only when every target and
 mutation is included in the same bounded batch.
 
+For a merge-triggered mutation, the outline must additionally identify:
+
+- the exact PR and triggering workflow;
+- target account, environment, region, cluster, project, or subscription;
+- expected infrastructure actions and material impact;
+- rollback, recovery, or corrective-PR ownership; and
+- the post-merge deployment, runtime, and provider evidence required.
+
+Unknown triggering effects block the merge until inspected. A single accepted
+plan may contain both the exact merge authorization and this infrastructure
+approval. Do not ask twice when that one complete plan satisfies both
+contracts.
+
 - When the task uses a plan, include the complete infrastructure outline in
   that plan instead of creating a separate approval ceremony.
 - Use read-only discovery to make the outline complete before asking. Do not
   split known changes into several summaries or approval prompts.
+
+### Name-Aware Material AWS Targets
+
+- Treat an AWS infrastructure batch as large or materially risky when it
+  affects production or shared infrastructure, spans accounts, Regions, or a
+  substantial resource set, or can materially change IAM or security, network
+  routing, persistent data, availability, cost, or recovery.
+- For such a batch, follow `aws-agent-toolkit-guidance` during read-only
+  discovery to resolve the current account display name and Region long name
+  where the verified identity, partition, API availability, and permissions
+  allow it.
+- Show the target once in the consolidated outline as
+  `account name (account ID)` and `Region long name (Region code)`. Keep the
+  STS-verified account ID, ARN, and Region code authoritative; names are
+  display-only operator aids.
+- If a name cannot be resolved, state `display name unavailable` beside the
+  stable ID or code. Do not guess, change credentials, or broaden IAM access to
+  obtain a label.
+- Fold this evidence into the existing consolidated outline and its one
+  confirmation. Do not create a separate identity prompt or approval ceremony.
 
 ### One Confirmation And One-Pass Execution
 
@@ -105,6 +142,11 @@ mutation is included in the same bounded batch.
 
 ### Deletion And Removal Exception
 
+- Follow `deletion-safety` first: default the resource lifecycle to a
+  recoverable soft-delete, disablement, quarantine, retained snapshot, or
+  provider recovery control. If hard deletion remains necessary, combine the
+  deletion-safety and infrastructure fields into one outline and one exact
+  post-outline manual confirmation.
 - Deleting, destroying, or removing infrastructure always requires explicit
   user confirmation after the consolidated outline, even when the initial
   request already asked for or authorized the deletion.
@@ -164,11 +206,17 @@ confirmation boundary above.
 - Hiding uncertainty with generic language such as "minor cloud updates."
 - Treating a successful command exit as proof that the intended infrastructure
   state is correct.
+- Treating merge authorization as infrastructure approval, or starting a
+  merge with unknown covered deployment effects.
 
 ## Verification
 
 - Confirm the outline identifies target, actions, execution boundary, impact,
   rollback or recovery, and validation before the first mutation.
+- For a large or materially risky AWS batch, confirm the outline includes the
+  resolved account and Region names where available, always includes the
+  stable account ID and Region code, and reports unavailable display labels
+  explicitly without broadening access.
 - Confirm the user approved the plan or outline once for the complete batch, or
   supplied a qualifying initial request for a non-deletion batch.
 - Confirm every deletion or removal received explicit confirmation after its
@@ -182,6 +230,9 @@ confirmation boundary above.
 - Confirm no covered mutation occurred outside the approved batch.
 - Confirm additional required changes were consolidated into one follow-up
   batch and received one confirmation before their first mutation.
+- For a merge-triggered mutation, confirm the workflow, exact target, expected
+  actions and impact, recovery, and post-merge evidence were included before
+  the merge and that one complete accepted plan was not redundantly confirmed.
 
 ## Examples
 
@@ -200,11 +251,11 @@ Proceed with this bounded batch?
 Detailed non-deletion initial request that can count as confirmation:
 
 ```text
-In AWS account 123456789012, region us-east-1, update only the existing staging
-ECS service desired count from 2 to 3. This adds one task and its normal cost,
-does not change data or IAM, and can be rolled back to 2. Verify the account,
-service deployment, ready task count, and health check. Proceed with exactly
-that change.
+In AWS account payments-production (123456789012), Region US East
+(N. Virginia) (us-east-1), update only the existing staging ECS service desired
+count from 2 to 3. This adds one task and its normal cost, does not change data
+or IAM, and can be rolled back to 2. Verify the account, service deployment,
+ready task count, and health check. Proceed with exactly that change.
 ```
 
 Planned deletion that always requires confirmation after the summary:
