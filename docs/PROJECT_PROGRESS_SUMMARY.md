@@ -62,7 +62,7 @@ See `docs/CONSTITUTION.md` for project-wide constraints and principles.
 - **PAUSED**: no
 - **INTENT**: Render exact failures, provide retry/exclusion triage, and support bulk STALE retirement with branch preservation.
 - **APPROACH**: 1. Reuse a compact sanitized failure renderer across human output and interactive completion. 2. Add failure retry and exact reviewed exclusions without repository/file repair. 3. Use path-qualified selector membership so Space preserves multiple toggles. 4. Make stale unproven worktrees interactive-only retirable after status/process inspection while preserving local branches. 5. Add review and bulk STALE actions with exact confirmation. 6. Prove selection, safety, branch recovery, and automation boundaries before ready-PR delivery.
-- **OPEN ITEMS**: approved exact-head installation and hosted validation
+- **OPEN ITEMS**: approved hosted validation
 - **POINTERS**: `docs/specs/0005-sweep-interactive-failures/SPEC.md`
 
 ## LAST UPDATED

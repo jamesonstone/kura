@@ -200,7 +200,12 @@ explicit bulk retirement of age-stale worktrees with recovery refs preserved.
   86.955 seconds; approved `make test-race` passed in 113.652 seconds.
 - PASS: approved lint, release validation, all six snapshot archives, manpage
   lint, Gitleaks scans, and govulncheck passed with no called vulnerabilities.
-- PENDING: install the approved exact head and rerun hosted PR validation.
+- PASS: `make build` installed approved commit `df42d3d` with exact Kura module
+  provenance/version ldflags and refreshed the manual. A live full-fleet PTY
+  report showed 33/33 stale targets selectable and bulk-delete eligible.
+- PASS: an expect-driven real PTY selected three distinct stale rows with Space,
+  observed `selected 3`, and cancelled before review without any removal.
+- PENDING: rerun hosted PR validation on the approved head.
 
 ## NOTES
 
