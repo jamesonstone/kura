@@ -8,6 +8,7 @@
 | 0002 | worktree-sweep | `docs/specs/0002-worktree-sweep` | complete | no | 2026-08-24 | Add one fleet-wide `git wt sweep` command that discovers linked Git worktrees across bounded user and provider roots, proves GitHub merge state, reports disk usage and safety classifications, and removes only the exact worktrees selected through the authority appropriate to their risk. |
 | 0003 | sweep-progress-readability | `docs/specs/0003-sweep-progress-readability` | complete | no | 2026-08-24 | Make fleet sweep visibly active during slow operations, reduce GitHub API round-trips, and add compact age and local-file context without weakening removal authority. |
 | 0004 | sweep-batched-revalidation | `docs/specs/0004-sweep-batched-revalidation` | complete | no | 2026-08-24 | Replace per-candidate fleet refreshes with one selected-set revalidation plus immediate target-local safety checks. |
+| 0005 | sweep-interactive-failures | `docs/specs/0005-sweep-interactive-failures` | complete | no | 2026-08-24 | Render exact interactive failures, provide safe retry/exclusion triage, and add guarded STALE review. |
 
 ## PROJECT INTENT
 
@@ -55,6 +56,15 @@ See `docs/CONSTITUTION.md` for project-wide constraints and principles.
 - **OPEN ITEMS**: none
 - **POINTERS**: `docs/specs/0004-sweep-batched-revalidation/SPEC.md`
 
+### sweep-interactive-failures
+
+- **STATUS**: complete
+- **PAUSED**: no
+- **INTENT**: Render exact interactive failures, provide safe retry/exclusion triage, and add guarded STALE review.
+- **APPROACH**: 1. Reuse a compact sanitized failure renderer across human output and interactive completion. 2. Capture the pre-apply failure boundary so only newly appended apply failures are shown after confirmation. 3. Always print removed/pruned/preserved counts before returning apply errors. 4. Add failure actions for retry and exact reviewed exclusions without repository/file repair. 5. Add a STALE-only selector that preserves state authority. 6. Prove failure, partial-success, retry, exclusion, safety, and stale-filter behavior before ready-PR delivery.
+- **OPEN ITEMS**: none
+- **POINTERS**: `docs/specs/0005-sweep-interactive-failures/SPEC.md`
+
 ## LAST UPDATED
 
-2026-08-24 14:07:39 EDT
+2026-08-24 15:10:43 EDT

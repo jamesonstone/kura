@@ -84,6 +84,18 @@ size-free fleet refresh instead of rebuilding the fleet once per worktree. It
 then refreshes process evidence once and immediately rechecks each target's
 exact registration, branch, head, and local-status fingerprint before removal.
 One drifted target is preserved without weakening independent safe targets.
+After apply, interactive sweep always prints a compact completion block. It
+reports removed, metadata-pruned, and preserved/failed counts, then lists each
+new apply failure with its operation, repository/path, and exact error before
+the command returns its aggregate nonzero status.
+
+The action menu offers `[f] address failures`: retry discovery/GitHub evidence
+immediately, or select exact retired paths to add to reviewed configuration
+exclusions. Exclusion writes retain the normal diff, confirmation, backup, and
+atomic persistence contract; this workflow never deletes orphaned contents or
+guesses repository identity. `[s] review STALE` opens a stale-only selector.
+Protected and unproven rows remain blocked, and every selectable row retains
+its existing exact review and confirmation requirements.
 
 Grouped and selector output show each worktree's last commit date. A `STALE`
 annotation means that date is older than two calendar months; it is an

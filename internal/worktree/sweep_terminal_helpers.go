@@ -103,6 +103,26 @@ func selectedSweepCandidates(candidates []SweepCandidate, selected map[string]bo
 	return result
 }
 
+func staleSweepCandidates(candidates []SweepCandidate, only SweepState) []SweepCandidate {
+	result := make([]SweepCandidate, 0)
+	for _, candidate := range candidates {
+		if candidate.Stale && (only == "" || candidate.State == only) {
+			result = append(result, candidate)
+		}
+	}
+	return result
+}
+
+func countSelectableSweepCandidates(candidates []SweepCandidate) int {
+	count := 0
+	for _, candidate := range candidates {
+		if candidate.Selectable {
+			count++
+		}
+	}
+	return count
+}
+
 func nextSweepSort(current string) string {
 	order := []string{"state", "size", "updated", "repository", "path"}
 	for index, value := range order {

@@ -44,9 +44,10 @@ func TestSweepMenuUsesStateTerminologyAndCounts(t *testing.T) {
 	}
 	var output bytes.Buffer
 	app := NewApp(&output, &output)
-	selected, err := app.chooseSweepMenu(context.Background(), bufio.NewReader(strings.NewReader("l\n")), candidates, SweepOptions{})
-	if err != nil || len(selected) != 3 {
-		t.Fatalf("selected=%#v err=%v", selected, err)
+	report := SweepReport{Candidates: candidates}
+	selected, retry, err := app.chooseSweepMenu(context.Background(), bufio.NewReader(strings.NewReader("l\n")), &report, SweepConfig{}, SweepOptions{})
+	if err != nil || retry || len(selected) != 3 {
+		t.Fatalf("selected=%#v retry=%t err=%v", selected, retry, err)
 	}
 	prompt := output.String()
 	if strings.Contains(strings.ToLower(prompt), "dirty") || !strings.Contains(prompt, "Merged + Local Files") || !strings.Contains(prompt, "2 WT + 1 metadata") {
