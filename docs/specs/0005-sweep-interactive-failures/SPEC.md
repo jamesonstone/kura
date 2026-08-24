@@ -2,7 +2,7 @@
 kit_metadata_version: 1
 artifact: "spec"
 workflow_version: 3
-phase: "complete"
+phase: "validation"
 feature:
   id: "0005"
   slug: "sweep-interactive-failures"
@@ -49,8 +49,8 @@ delivery_intent: issue_branch_pr_ready
 
 ## PURPOSE
 
-Show exact interactive sweep failures, provide safe guided triage, and add a
-STALE review path without weakening removal authority.
+Show exact interactive sweep failures, provide safe guided triage, and support
+explicit bulk retirement of age-stale worktrees with recovery refs preserved.
 
 ## CONTEXT
 
@@ -95,11 +95,20 @@ STALE review path without weakening removal authority.
 - REQ-012: Refuse empty, relative, filesystem-root, or home-root failure
   exclusions. Never delete an orphan directory, prune metadata manually, or
   rewrite Git/GitHub repository identity from this workflow.
-- REQ-013: Add `[s] review STALE` with total/selectable counts. The selector
-  shows all age-stale candidates matching `--only`, keeps protected/unproven
-  rows blocked, and retains exact review/confirmation for selected rows.
-- REQ-014: Age alone never changes state, selectability, automatic authority,
-  force authority, or branch-removal behavior.
+- REQ-013: Add `[s] review STALE` with total/selectable counts and `[b]
+  bulk-delete STALE` to preselect every eligible stale worktree for the same
+  exact review and confirmation.
+- REQ-014: An age-stale `UNPROVEN / NOT MERGED` worktree may become
+  interactive-only retirable after exact status and process inspection.
+- REQ-015: Primary, current, default-branch, locked, or positively active stale
+  worktrees remain blocked. Stale retirement never gains automatic authority.
+- REQ-016: Immediately revalidate registration, branch, head, process state,
+  and status fingerprint before stale-unproven removal. Preserve its local
+  branch as a recovery ref and never delete it through ordinary or force mode.
+- REQ-017: Exact review identifies the STALE unproven override, every local
+  status entry, force behavior, and branch-preservation outcome.
+- REQ-018: Selector membership uses a path-qualified set and must preserve
+  multiple Space toggles across redraw, sort, and filter changes.
 
 ## ACCEPTANCE
 
@@ -119,8 +128,9 @@ STALE review path without weakening removal authority.
   terminal action loop, clearing a resolved failure.
 - AC-008: Tests prove confirmed exact-path exclusions are persisted and broad
   home/root exclusions are refused.
-- AC-009: Tests prove the menu reports STALE total/selectable counts and the
-  stale filter includes blocked rows without making them selectable.
+- AC-009: Tests prove review/bulk STALE counts, multi-Space selection, dirty
+  stale-unproven retirement, active-process blocking, and local-branch
+  preservation.
 
 ## ACCEPTED PLAN
 
@@ -128,7 +138,8 @@ STALE review path without weakening removal authority.
 2. Capture the pre-apply failure boundary in `runSweepTerminal`.
 3. Always render completion after apply, then return the original apply error.
 4. Add total-failure, partial-success, successful, and sanitization tests.
-5. Add guided retry/exclusion failure actions and the guarded STALE selector.
+5. Add guided retry/exclusion failure actions and explicit review/bulk STALE
+   retirement with branch preservation.
 6. Update guidance, validate, install, and deliver the ready GH-11 PR.
 
 ## DECISIONS
@@ -139,7 +150,8 @@ STALE review path without weakening removal authority.
 - The aggregate CLI error remains intentionally terse after the detailed block.
 - Failure exclusion is a reversible discovery-policy action, not repair or
   deletion. Identity correction remains an explicit repository operation.
-- STALE is a selector lens only; existing state-based authority remains final.
+- STALE unproven retirement is a new explicit interactive authority. It removes
+  only the worktree; local branch history remains as the recovery boundary.
 
 ## VALIDATION
 
@@ -163,8 +175,7 @@ STALE review path without weakening removal authority.
   all completed successfully with no review comments or change requests.
 - PASS: stacked focused tests prove immediate retry/re-render, confirmed exact
   exclusion persistence, affected linked-worktree expansion for GitHub failures,
-  broad home-path refusal, failure/stale action counts, and stale filtering that
-  retains blocked rows.
+  broad home-path refusal, and failure-action counts.
 - PASS: stacked `make check` passed with the worktree package completing in
   77.044 seconds; stacked `make test-race` passed in 84.952 seconds.
 - PASS: stacked lint reported zero findings; release configuration, all six
@@ -175,6 +186,21 @@ STALE review path without weakening removal authority.
   applying any removal.
 - PASS: stacked PR #12 head `21408d0` remained ready, `MERGEABLE`, and `CLEAN`;
   Validate, Lint, and GoReleaser snapshot passed again with no review feedback.
+- PASS: approved focused tests prove three path-qualified Space selections
+  remain selected even with deliberately duplicate candidate IDs, bulk STALE
+  preselection includes every eligible row, and deselection affects one row.
+- PASS: real-Git coverage retires a dirty stale-unproven worktree, revalidates
+  exact local state, and preserves its unpublished local branch at the exact
+  head. Active stale worktrees remain protected and automatic authority rejects
+  stale-unproven retirement.
+- PASS: a live read-only fleet report found 33 stale worktrees: all 33 were
+  selectable under the approved policy, 32 were unproven interactive-retirement
+  candidates, and no protected/active stale targets appeared in that snapshot.
+- PASS: approved `make check` passed with the worktree package completing in
+  86.955 seconds; approved `make test-race` passed in 113.652 seconds.
+- PASS: approved lint, release validation, all six snapshot archives, manpage
+  lint, Gitleaks scans, and govulncheck passed with no called vulnerabilities.
+- PENDING: install the approved exact head and rerun hosted PR validation.
 
 ## NOTES
 
@@ -186,3 +212,5 @@ STALE review path without weakening removal authority.
   the existing GH-11/PR #12 delivery lane with no new issue or branch.
 - 2026-08-24: The stacked head completed local, race, security, release,
   installation, real-PTY, and hosted validation.
+- 2026-08-24: User approved interactive retirement of STALE unproven worktrees
+  with branch preservation and required a path-qualified multi-selection fix.

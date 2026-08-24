@@ -63,8 +63,11 @@ the command returns its aggregate nonzero status; failures shown before
 selection are not repeated.
 The bare action menu can retry failures or add explicitly selected exact paths
 to reviewed configuration exclusions. It never deletes orphan contents or
-rewrites repository identity. Its STALE action opens an age-filtered selector;
-protected and unproven rows remain blocked and age never grants authority.
+rewrites repository identity. STALE review opens an age-filtered selector, and
+bulk STALE preselects every eligible row for exact confirmation. Age-stale
+unproven worktrees may be retired only interactively: local status, process
+evidence, registration, branch, and head are rechecked, and the local branch is
+preserved. Protected or active rows remain blocked.
 .TP
 .B sweep config [--config path]
 Create or update sweep configuration interactively. The first bare terminal
@@ -224,7 +227,9 @@ operation. Remote branches are never deleted.
 Human output shows the last commit date and marks dates older than two calendar
 months as
 .BR STALE .
-That annotation is informational and never changes removal authority.
+That annotation never changes automatic authority. For unproven worktrees it
+may grant only explicit interactive worktree-retirement authority; local branch
+deletion remains forbidden.
 Merged local-file rows include a bounded file hint; exact status entries remain
 in the confirmation review. Counted action-menu labels use the same
 .B MERGED + LOCAL FILES

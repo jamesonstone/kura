@@ -100,6 +100,12 @@ func validateSweepAuthority(candidate SweepCandidate, automatic bool) error {
 	if automatic && !candidate.AutoRemovable {
 		return fmt.Errorf("candidate requires interactive confirmation")
 	}
+	if candidate.StaleRetirable {
+		if !candidate.Stale || candidate.State != SweepUnproven {
+			return fmt.Errorf("invalid STALE retirement authority")
+		}
+		return nil
+	}
 	if candidate.State != SweepRemoveReady && candidate.State != SweepMergedLocalFiles &&
 		candidate.State != SweepMergedLocalCommits && candidate.State != SweepStaleMetadata {
 		return fmt.Errorf("state %s cannot be removed", candidate.State)
@@ -135,10 +141,36 @@ func (a *App) removeSweepWorktree(ctx context.Context, candidate SweepCandidate)
 	if status.Fingerprint != candidate.Status.Fingerprint {
 		return fmt.Errorf("local status changed after fleet revalidation; refresh required")
 	}
+	if candidate.StaleRetirable {
+		if candidate.Branch != "" {
+			branchHead, branchErr := a.gitText(ctx, repo.top, "rev-parse", "--verify", "refs/heads/"+candidate.Branch)
+			if branchErr != nil || branchHead != candidate.HeadOID {
+				return fmt.Errorf("local recovery branch changed or is unavailable; refresh required")
+			}
+		}
+		return a.removeSweepStaleUnproven(ctx, repo, *entry, candidate)
+	}
 	if candidate.ForceBranch {
 		return a.removeSweepDivergentBranch(ctx, repo, *entry, candidate)
 	}
 	return a.removeSweepMergedHead(ctx, repo, *entry, candidate)
+}
+
+func (a *App) removeSweepStaleUnproven(
+	ctx context.Context,
+	repo repository,
+	entry worktreeEntry,
+	candidate SweepCandidate,
+) error {
+	if candidate.ForceWorktree {
+		_, err := a.git(ctx, repo.top, "worktree", "remove", "--force", entry.path)
+		return err
+	}
+	removal, err := a.inspectWorktreeRemoval(ctx, repo, entry, preserveIgnoredBuildOutput)
+	if err != nil {
+		return err
+	}
+	return a.executeWorktreeRemoval(ctx, repo, removal)
 }
 
 func (a *App) removeSweepMergedHead(

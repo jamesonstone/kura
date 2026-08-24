@@ -182,11 +182,11 @@ group falls back only far enough to isolate fail-closed repository results.
 Global authentication and rate-limit failures do not fan out into retries.
 
 The grouped report and selector include the last commit date. `STALE` means the
-date is older than two calendar months relative to report generation. This is
-only a prioritization hint: it does not change a candidate's state,
-selectability, or automatic authority. Local-file candidates also show a
-sanitized bounded path summary and overflow count. Exact status lines remain in
-the destructive review.
+date is older than two calendar months relative to report generation. It never
+changes automatic authority. An otherwise unproven stale worktree may gain
+interactive-only retirement authority after local status and process
+inspection; primary, current, default, locked, or active targets remain
+protected. Its local branch is preserved as a recovery ref.
 
 `--auto` removes only `remove-ready` and stale metadata. It never forces,
 deletes local files or divergent commits, deletes a remote branch, fetches,
@@ -214,8 +214,10 @@ Use `[f] address failures` to retry the read-only report or add selected exact
 retired paths to sweep exclusions through a full YAML diff and confirmation.
 This is discovery triage, not filesystem or repository repair: it never deletes
 an orphan directory or rewrites GitHub identity. Use `[s] review STALE` to open
-the selector with only age-stale rows. Protected/unproven rows remain blocked;
-age never grants removal authority.
+the selector with only age-stale rows, or `[b] bulk-delete STALE` to preselect
+every eligible stale row for exact review. STALE unproven worktrees may be
+retired interactively while preserving local branches; protected/active rows
+remain blocked and `--auto` never gains this authority.
 
 The counted action menu uses `Remove Ready` and `Merged + Local Files`
 terminology consistently with the report. The interactive selector uses arrows or `j`/`k`, Space, `/` filtering, `s`

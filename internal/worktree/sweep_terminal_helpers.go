@@ -10,7 +10,7 @@ func updateSweepSelection(
 	key sweepKey,
 	visible []SweepCandidate,
 	current *int,
-	selected map[string]bool,
+	selected sweepSelection,
 	sortBy *string,
 	explain *bool,
 ) (bool, bool) {
@@ -25,12 +25,12 @@ func updateSweepSelection(
 	case sweepKeyToggle:
 		candidate := visible[*current]
 		if candidate.Selectable {
-			selected[candidate.ID] = !selected[candidate.ID]
+			selected.toggle(candidate)
 		}
 	case sweepKeyAll:
 		for _, candidate := range visible {
 			if candidate.Selectable {
-				selected[candidate.ID] = true
+				selected.add(candidate)
 			}
 		}
 	case sweepKeyClear:
@@ -93,10 +93,10 @@ func selectSweepStates(candidates []SweepCandidate, states ...SweepState) []Swee
 	return result
 }
 
-func selectedSweepCandidates(candidates []SweepCandidate, selected map[string]bool) []SweepCandidate {
+func selectedSweepCandidates(candidates []SweepCandidate, selected sweepSelection) []SweepCandidate {
 	result := make([]SweepCandidate, 0, len(selected))
 	for _, candidate := range candidates {
-		if selected[candidate.ID] {
+		if selected.contains(candidate) {
 			result = append(result, candidate)
 		}
 	}
@@ -121,6 +121,16 @@ func countSelectableSweepCandidates(candidates []SweepCandidate) int {
 		}
 	}
 	return count
+}
+
+func bulkStaleSweepCandidates(candidates []SweepCandidate, only SweepState) []SweepCandidate {
+	result := make([]SweepCandidate, 0)
+	for _, candidate := range staleSweepCandidates(candidates, only) {
+		if candidate.Selectable {
+			result = append(result, candidate)
+		}
+	}
+	return result
 }
 
 func nextSweepSort(current string) string {
@@ -162,8 +172,17 @@ func writeSweepReview(writer io.Writer, candidates []SweepCandidate, color bool)
 		if candidate.ForceWorktree {
 			worktreeMode = "git worktree remove --force"
 		}
-		if candidate.ForceBranch {
+		if candidate.StaleRetirable && candidate.Branch == "" {
+			branchMode = "no local branch (detached)"
+		} else if candidate.StaleRetirable {
+			branchMode = "preserved as recovery ref"
+		} else if candidate.ForceBranch {
 			branchMode = "git branch -D"
+		}
+		if candidate.StaleRetirable {
+			if _, err := fmt.Fprintln(writer, "  authority: STALE interactive override; merge remains unproven"); err != nil {
+				return err
+			}
 		}
 		if _, err := fmt.Fprintf(writer, "  worktree removal: %s\n  local branch removal: %s\n", worktreeMode, branchMode); err != nil {
 			return err

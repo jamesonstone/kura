@@ -13,7 +13,7 @@ func renderSweepSelector(
 	output *os.File,
 	candidates []SweepCandidate,
 	current int,
-	selected map[string]bool,
+	selected sweepSelection,
 	filter string,
 	sortBy string,
 	explain bool,
@@ -35,7 +35,7 @@ func renderSweepSelectorAtSize(
 	output io.Writer,
 	candidates []SweepCandidate,
 	current int,
-	selected map[string]bool,
+	selected sweepSelection,
 	filter string,
 	sortBy string,
 	explain bool,
@@ -50,7 +50,7 @@ func renderSweepSelectorAtSize(
 	}
 	end := min(start+visibleCount, len(candidates))
 	title := truncateTerminalLine(
-		fmt.Sprintf("Sweep (%d/%d, selected %d)  j/k/arrows move  Space toggle  / filter  s sort  e explain  Enter review  q cancel", current+1, len(candidates), countSweepSelection(selected)),
+		fmt.Sprintf("Sweep (%d/%d, selected %d)  j/k/arrows move  Space toggle  a all  u clear  / filter  s sort  e explain  Enter review  q cancel", current+1, len(candidates), countSweepSelection(selected)),
 		width,
 	)
 	header := truncateTerminalLine("    STATE                  SIZE     LAST UPDATED     REPOSITORY           BRANCH         PR    LOCAL FILES / PATH", width)
@@ -64,7 +64,7 @@ func renderSweepSelectorAtSize(
 		if index == current {
 			pointer = ">"
 		}
-		if selected[candidate.ID] {
+		if selected.contains(candidate) {
 			mark = "[x]"
 		} else if !candidate.Selectable {
 			mark = "[-]"
@@ -113,12 +113,6 @@ func renderSweepSelectorAtSize(
 	return lines, nil
 }
 
-func countSweepSelection(selected map[string]bool) int {
-	count := 0
-	for _, active := range selected {
-		if active {
-			count++
-		}
-	}
-	return count
+func countSweepSelection(selected sweepSelection) int {
+	return len(selected)
 }
