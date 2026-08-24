@@ -41,7 +41,9 @@ func TestRenderSweepSelectorShowsSelectionAndBlockedRows(t *testing.T) {
 		{ID: "two", Repository: "example/project", Path: "/tmp/two", Branch: "main", State: SweepProtectedActive},
 	}
 	var output bytes.Buffer
-	lines, err := renderSweepSelectorAtSize(&output, candidates, 0, map[string]bool{"one": true}, "", "state", true, false, 120, 20)
+	selected := make(sweepSelection)
+	selected.add(candidates[0])
+	lines, err := renderSweepSelectorAtSize(&output, candidates, 0, selected, "", "state", true, false, 120, 20)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,11 +73,33 @@ func TestUpdateSweepSelectionNeverSelectsBlockedCandidate(t *testing.T) {
 		{ID: "blocked", State: SweepProtectedActive},
 		{ID: "ready", State: SweepRemoveReady, Selectable: true},
 	}
-	selected := make(map[string]bool)
+	selected := make(sweepSelection)
 	current, sortBy, explain := 0, "state", false
 	updateSweepSelection(sweepKey{kind: sweepKeyAll}, visible, &current, selected, &sortBy, &explain)
-	if selected["blocked"] || !selected["ready"] {
+	if selected.contains(visible[0]) || !selected.contains(visible[1]) {
 		t.Fatalf("selection = %#v", selected)
+	}
+}
+
+func TestSpaceTogglePreservesMultiplePathQualifiedSelections(t *testing.T) {
+	visible := []SweepCandidate{
+		{ID: "shared", Path: "/tmp/one", Selectable: true},
+		{ID: "shared", Path: "/tmp/two", Selectable: true},
+		{ID: "shared", Path: "/tmp/three", Selectable: true},
+	}
+	selected := make(sweepSelection)
+	current, sortBy, explain := 0, "state", false
+	for index := range visible {
+		current = index
+		updateSweepSelection(sweepKey{kind: sweepKeyToggle}, visible, &current, selected, &sortBy, &explain)
+	}
+	if countSweepSelection(selected) != 3 || len(selectedSweepCandidates(visible, selected)) != 3 {
+		t.Fatalf("selection = %#v", selected)
+	}
+	current = 1
+	updateSweepSelection(sweepKey{kind: sweepKeyToggle}, visible, &current, selected, &sortBy, &explain)
+	if countSweepSelection(selected) != 2 || selected.contains(visible[1]) {
+		t.Fatalf("selection after deselect = %#v", selected)
 	}
 }
 

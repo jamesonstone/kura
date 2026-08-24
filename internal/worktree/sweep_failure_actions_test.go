@@ -96,7 +96,11 @@ func TestSweepMenuShowsFailureAndStaleActions(t *testing.T) {
 	if err != nil || retry || len(selected) != 0 {
 		t.Fatalf("selected=%#v retry=%t err=%v", selected, retry, err)
 	}
-	for _, expected := range []string{"[s] review STALE (2 total, 1 selectable)", "[f] address failures (1)"} {
+	for _, expected := range []string{
+		"[s] review STALE (2 total, 1 selectable)",
+		"[b] bulk-delete STALE (1; exact review required)",
+		"[f] address failures (1)",
+	} {
 		if !strings.Contains(output.String(), expected) {
 			t.Fatalf("menu missing %q:\n%s", expected, output.String())
 		}
@@ -104,6 +108,31 @@ func TestSweepMenuShowsFailureAndStaleActions(t *testing.T) {
 	stale := staleSweepCandidates(candidates, "")
 	if len(stale) != 2 || countSelectableSweepCandidates(stale) != 1 {
 		t.Fatalf("stale=%#v", stale)
+	}
+}
+
+func TestSweepMenuBulkSelectsEveryEligibleStaleWorktree(t *testing.T) {
+	candidates := []SweepCandidate{
+		{ID: "ready", Path: "/tmp/ready", State: SweepRemoveReady, Stale: true, Selectable: true},
+		{ID: "unproven", Path: "/tmp/unproven", State: SweepUnproven, Stale: true, StaleRetirable: true, Selectable: true},
+		{ID: "protected", Path: "/tmp/protected", State: SweepProtectedActive, Stale: true},
+		{ID: "recent", Path: "/tmp/recent", State: SweepRemoveReady, Selectable: true},
+	}
+	report := SweepReport{Candidates: candidates}
+	var output bytes.Buffer
+	app := NewApp(&output, &output)
+	selected, retry, err := app.chooseSweepMenu(
+		context.Background(), bufio.NewReader(strings.NewReader("b\n")),
+		&report, SweepConfig{}, SweepOptions{},
+	)
+	if err != nil || retry || len(selected) != 2 {
+		t.Fatalf("selected=%#v retry=%t err=%v", selected, retry, err)
+	}
+	if selected[0].ID != "ready" || selected[1].ID != "unproven" {
+		t.Fatalf("bulk selection = %#v", selected)
+	}
+	if !strings.Contains(output.String(), "[i] selector (3 WT)") {
+		t.Fatalf("selector count omitted STALE unproven target:\n%s", output.String())
 	}
 }
 

@@ -66,7 +66,8 @@ their approximate disk usage, and groups them by removal safety:
   staged, untracked, ignored, or submodule material;
 - `MERGED + LOCAL COMMITS` has a merged pull request but a different local
   head;
-- `PROTECTED / ACTIVE` and `UNPROVEN / NOT MERGED` are never selectable;
+- `PROTECTED / ACTIVE` is never selectable; `UNPROVEN / NOT MERGED` is blocked
+  unless it is age-marked `STALE` and explicitly retired interactively;
 - `STALE METADATA` is native Git administrative state whose path is gone.
 
 On a terminal, bare sweep shows an animated progress line while it discovers,
@@ -93,15 +94,18 @@ The action menu offers `[f] address failures`: retry discovery/GitHub evidence
 immediately, or select exact retired paths to add to reviewed configuration
 exclusions. Exclusion writes retain the normal diff, confirmation, backup, and
 atomic persistence contract; this workflow never deletes orphaned contents or
-guesses repository identity. `[s] review STALE` opens a stale-only selector.
-Protected and unproven rows remain blocked, and every selectable row retains
-its existing exact review and confirmation requirements.
+guesses repository identity. `[s] review STALE` opens a stale-only selector;
+`[b] bulk-delete STALE` preselects every eligible stale worktree for exact
+review and confirmation. Primary, current, default, locked, or active rows
+remain blocked. STALE unproven worktrees preserve local branches as recovery
+refs and are never eligible for `--auto`.
 
 Grouped and selector output show each worktree's last commit date. A `STALE`
-annotation means that date is older than two calendar months; it is an
-informational SSD-cleanup hint and never grants removal authority. Local-file
-lanes show a compact basename/path hint plus an overflow count, while the exact
-confirmation review continues to list every status entry.
+annotation means that date is older than two calendar months. It enables only
+an interactive worktree-retirement path: exact local files are reviewed,
+process and registration evidence are rechecked, and an unproven local branch
+is preserved. Local-file lanes show a compact basename/path hint plus an
+overflow count, while exact confirmation lists every status entry.
 
 For unattended maintenance:
 

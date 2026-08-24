@@ -29,6 +29,7 @@ func (a *App) classifySweepRepositories(
 			for _, entry := range target.entries {
 				candidate := newUnprovenSweepCandidate(target, entry, resolved.identity, "github-unavailable", resolved.err.Error())
 				a.finishSweepCandidate(ctx, target.primary, &candidate, now)
+				a.prepareStaleRetirableCandidate(ctx, config, target, &candidate)
 				report.Candidates = append(report.Candidates, candidate)
 			}
 			continue
@@ -36,6 +37,7 @@ func (a *App) classifySweepRepositories(
 		for _, entry := range target.entries {
 			candidate := a.classifySweepEntry(ctx, cwd, config, target, entry, resolved.identity, resolved.defaultBranch, resolved.pullRequests[entry.branch])
 			a.finishSweepCandidate(ctx, target.primary, &candidate, now)
+			a.prepareStaleRetirableCandidate(ctx, config, target, &candidate)
 			report.Candidates = append(report.Candidates, candidate)
 		}
 	}
@@ -192,7 +194,7 @@ func sweepCandidateID(candidate SweepCandidate) string {
 func sweepCandidateSnapshot(candidate SweepCandidate) string {
 	parts := []string{
 		candidate.ID, candidate.HeadOID, candidate.DefaultBranch, string(candidate.State), candidate.Status.Fingerprint,
-		candidate.ProcessEvidence.State,
+		candidate.ProcessEvidence.State, fmt.Sprint(candidate.StaleRetirable),
 	}
 	if candidate.PullRequest != nil {
 		parts = append(parts, fmt.Sprint(candidate.PullRequest.Number), candidate.PullRequest.HeadRefOID, candidate.PullRequest.BaseRefName)
