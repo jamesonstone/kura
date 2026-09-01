@@ -70,6 +70,9 @@ primary checkout below the sorted lanes. For example:
 git wt list --plain --sort path
 git wt list --plain --sort state --reverse
 git wt list --root-position bottom
+git wt h
+git wt -h
+git wt --home
 git wt home
 ```
 
@@ -92,9 +95,12 @@ exists locally or on origin, answering `y` attaches that branch in the
 canonical owner/repository directory. Only when the branch exists in neither
 the local repository nor origin does answering `y` create it from the origin
 default branch; `n` exits without changes.
-`git wt home` opens the same primary checkout in a child shell from any linked
-worktree. Use it when returning to the clone's stable home checkout without
-looking up a lane name.
+`git wt home`, `git wt h`, `git wt -h`, and `git wt --home` open the same
+primary checkout in a child shell from any linked worktree. They resolve the
+primary path from Git's common directory and do not list linked worktrees or
+run list GitHub lookups. Use them when returning to the clone's stable home
+checkout without opening the selector. Help remains `git wt help` and
+`git wt --help`. A branch named `h` is still opened with `git wt add h`.
 
 Listing never fetches, prunes, changes Git state, or requires GitHub to
 succeed. Its bounded pull-request annotation is read-only and fail-soft. Use

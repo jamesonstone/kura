@@ -1,4 +1,4 @@
-.TH GIT-WT 1 "August 24, 2026" "git-wt" "Git Manual"
+.TH GIT-WT 1 "September 1, 2026" "git-wt" "Git Manual"
 .SH NAME
 git-wt \- manage and open project-oriented Git worktrees
 .SH SYNOPSIS
@@ -77,8 +77,9 @@ complete old/new YAML, retain one backup, and atomically write after final
 confirmation. Operational automation, JSON, dry-run, and redirected runs never
 prompt or create configuration.
 .TP
-.B home
-Open a shell in this clone's primary worktree.
+.B home, h, -h, --home
+Open a shell in this clone's primary worktree without listing linked
+worktrees or looking up pull requests.
 .TP
 .B root
 Print the canonical linked-worktree directory.
@@ -98,7 +99,7 @@ Explicitly prune stale worktree metadata.
 .B migrate [--apply]
 Preview or apply legacy flat-directory migration.
 .TP
-.B help
+.B help, --help
 Show command help.
 .SH LIST OPTIONS
 .TP

@@ -69,11 +69,11 @@ func (a *App) enterLane(ctx context.Context, cwd, lane string) error {
 }
 
 func (a *App) enterHome(ctx context.Context, cwd string) error {
-	repo, err := a.repository(ctx, cwd)
+	primary, err := a.primaryWorktree(ctx, cwd)
 	if err != nil {
 		return err
 	}
-	return a.runShell(ctx, repo.primary)
+	return a.runShell(ctx, primary)
 }
 
 func runInteractiveShell(ctx context.Context, dir string) error {

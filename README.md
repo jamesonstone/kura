@@ -46,6 +46,7 @@ Git automatically discovers executables named `git-<command>` on `PATH`, so the 
 
 ```sh
 git wt help
+git wt h
 git wt list
 git wt issue 123
 git wt sync --dry-run
