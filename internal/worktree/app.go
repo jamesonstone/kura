@@ -36,14 +36,14 @@ Commands:
   sync [--dry-run] [--json]       Reconcile origin and proven merged worktree lanes
   sweep [flags]                    Discover and clean merged lanes across configured roots
   sweep config [--config <path>]  Create or update sweep configuration interactively
-  home                             Open a shell in this clone's primary worktree
+  home, h, -h, --home              Open a shell in this clone's primary worktree
   root                             Print the canonical linked-worktree directory
   path <lane>                      Print an exact registered lane path for shell navigation
   cd <lane>                        Open an interactive shell in an exact registered lane
   remove <lane|path>               Remove one exact clean, fully-pushed worktree
   prune [--dry-run]                Explicitly prune stale worktree metadata
   migrate [--apply]                Preview or apply legacy flat-directory migration
-  help                             Show this help
+  help, --help                     Show this help
 
 Environment:
   GIT_WT_ROOT          Override ~/worktrees (primarily for testing)
@@ -177,7 +177,7 @@ func (a *App) Run(ctx context.Context, cwd string, args []string) error {
 	}
 
 	switch args[0] {
-	case "help", "-h", "--help":
+	case "help", "--help":
 		if len(args) != 1 {
 			return fmt.Errorf("help accepts no arguments")
 		}
@@ -191,7 +191,7 @@ func (a *App) Run(ctx context.Context, cwd string, args []string) error {
 			return err
 		}
 		return a.writef("%s\n", repo.projectRoot)
-	case "home":
+	case "home", "h", "-h", "--home":
 		if len(args) != 1 {
 			return fmt.Errorf("home accepts no arguments")
 		}

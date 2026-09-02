@@ -50,6 +50,21 @@ func (a *App) repository(ctx context.Context, cwd string) (repository, error) {
 	}, nil
 }
 
+func (a *App) primaryWorktree(ctx context.Context, cwd string) (string, error) {
+	commonDir, err := a.gitText(ctx, cwd, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	if err != nil {
+		return "", fmt.Errorf("not inside a Git worktree: %w", err)
+	}
+	if filepath.Base(commonDir) != ".git" {
+		return "", fmt.Errorf("repository has no primary worktree")
+	}
+	primary := filepath.Clean(filepath.Dir(commonDir))
+	if primary == "." || primary == string(filepath.Separator) {
+		return "", fmt.Errorf("repository has no primary worktree")
+	}
+	return primary, nil
+}
+
 func (a *App) baseRoot() (string, error) {
 	if configured := strings.TrimSpace(a.getenv("GIT_WT_ROOT")); configured != "" {
 		if !filepath.IsAbs(configured) {
