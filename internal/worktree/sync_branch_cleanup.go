@@ -12,23 +12,6 @@ func (a *App) prepareMergedLocalBranchDeletion(
 	branch string,
 	expectedOID string,
 ) (string, error) {
-	mergeOutput, err := a.git(
-		ctx,
-		repo.top,
-		"config",
-		"--get-all",
-		"branch."+branch+".merge",
-	)
-	if err != nil {
-		return "", fmt.Errorf("resolve local branch merge ref: %w", err)
-	}
-	if mergeRef := strings.TrimSpace(string(mergeOutput)); mergeRef != "refs/heads/"+branch {
-		return "", fmt.Errorf(
-			"local branch merge ref %q is not the exact head ref refs/heads/%s",
-			mergeRef,
-			branch,
-		)
-	}
 	missingFetch := "__kit_wt_sync_missing_" + expectedOID + "__"
 	configuredFetch, err := a.git(
 		ctx,
@@ -85,11 +68,16 @@ func (a *App) deleteMergedLocalBranch(
 			detailOr(actualOID, "missing"),
 		)
 	}
-	_, err = a.git(
+	original, err := a.readBranchUpstream(ctx, repo, branch)
+	if err != nil {
+		return err
+	}
+	if err := a.setProofBranchUpstream(ctx, repo, branch); err != nil {
+		return err
+	}
+	_, deleteErr := a.git(
 		ctx,
 		repo.top,
-		"-c",
-		"branch."+branch+".remote=kit-wt-sync-proof",
 		"-c",
 		"remote.kit-wt-sync-proof.fetch=+refs/heads/*:refs/remotes/kit-wt-sync-proof/*",
 		"branch",
@@ -97,7 +85,10 @@ func (a *App) deleteMergedLocalBranch(
 		"--",
 		branch,
 	)
-	return err
+	if deleteErr != nil {
+		return joinBranchDeletionError(deleteErr, a.restoreBranchUpstream(ctx, repo, branch, original))
+	}
+	return nil
 }
 
 func (a *App) cleanupMergedLocalBranchDeletion(
