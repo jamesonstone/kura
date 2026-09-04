@@ -115,7 +115,34 @@ func TestSyncPreservesLocalBranchMovedBeforeExactDeletion(t *testing.T) {
 	}
 }
 
-func TestSyncPreservesLaneWhenBranchDeletionProofCannotBePrepared(t *testing.T) {
+func TestSyncRemovesSquashMergedLaneTrackingDefaultBranch(t *testing.T) {
+	fixture := newGitFixture(t)
+	path, headOID := createSquashMergedLane(t, fixture, "topic/tracks-main")
+	runGit(t, fixture.primary, "config", "branch.topic/tracks-main.merge", "refs/heads/main")
+	runGit(t, fixture.primary, "config", "branch.topic/tracks-main.remote", "origin")
+	fixture.app.resolveSyncPRs = staticSyncPRs(map[string][]SyncPullRequest{
+		"topic/tracks-main": {
+			mergedSyncPR(73, "topic/tracks-main", "main", headOID),
+		},
+	})
+
+	report, err := runSyncJSON(t, fixture, fixture.primary)
+	if err != nil {
+		t.Fatalf("sync error = %v", err)
+	}
+	decision := findSyncLane(t, report, "topic/tracks-main")
+	if decision.Action != "removed" || decision.Reason != "proven-safe-merged-lane" {
+		t.Fatalf("lane decision = %#v", decision)
+	}
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Fatalf("removed path still exists or stat failed: %v", err)
+	}
+	if got := gitText(t, fixture.primary, "show-ref", "--verify", "refs/heads/topic/tracks-main"); got != "" {
+		t.Fatalf("local branch still exists: %s", got)
+	}
+}
+
+func TestSyncRemovesSquashMergedLaneWithoutStoredMergeConfig(t *testing.T) {
 	fixture := newGitFixture(t)
 	path, headOID := createSquashMergedLane(t, fixture, "topic/missing-merge-config")
 	runGit(
@@ -127,24 +154,23 @@ func TestSyncPreservesLaneWhenBranchDeletionProofCannotBePrepared(t *testing.T) 
 	)
 	fixture.app.resolveSyncPRs = staticSyncPRs(map[string][]SyncPullRequest{
 		"topic/missing-merge-config": {
-			mergedSyncPR(73, "topic/missing-merge-config", "main", headOID),
+			mergedSyncPR(76, "topic/missing-merge-config", "main", headOID),
 		},
 	})
 
 	report, err := runSyncJSON(t, fixture, fixture.primary)
-	if err == nil {
-		t.Fatal("sync expected branch-deletion preparation failure")
+	if err != nil {
+		t.Fatalf("sync error = %v", err)
 	}
 	decision := findSyncLane(t, report, "topic/missing-merge-config")
-	if decision.Action != "preserved" ||
-		decision.Reason != "branch-deletion-preparation-failed" {
+	if decision.Action != "removed" || decision.Reason != "proven-safe-merged-lane" {
 		t.Fatalf("lane decision = %#v", decision)
 	}
-	if _, err := os.Stat(path); err != nil {
-		t.Fatalf("worktree was not preserved: %v", err)
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Fatalf("removed path still exists or stat failed: %v", err)
 	}
-	if got := gitText(t, fixture.primary, "rev-parse", "refs/heads/topic/missing-merge-config"); got != headOID {
-		t.Fatalf("local branch = %q, want %q", got, headOID)
+	if got := gitText(t, fixture.primary, "show-ref", "--verify", "refs/heads/topic/missing-merge-config"); got != "" {
+		t.Fatalf("local branch still exists: %s", got)
 	}
 }
 

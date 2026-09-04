@@ -119,8 +119,11 @@ branch only when it is clean and strictly behind; removes only exact canonical
 lanes backed by one same-repository PR merged into that default branch whose
 head OID exactly equals local `HEAD`; anchors that OID in a create-only
 temporary proof ref; and then uses ordinary `git branch -d` against that proof.
-This supports squash merges while retaining Git's refusal to delete a moved or
-reattached branch. Sync removes only its exact proof ref afterward. An actual
+The deletion command injects `branch.<name>.merge=refs/heads/<name>` with the
+proof remote, so lanes that still track `origin/<default>` after `git wt issue`
+or `git worktree add -b` can be deleted after squash-merge proof. The stored
+upstream is left unchanged. This supports squash merges while retaining Git's
+refusal to delete a moved or reattached branch. Sync removes only its exact proof ref afterward. An actual
 ignored repository-root `bin/` directory is treated as disposable build output:
 sync rechecks the lane, removes that exact directory, and then uses ordinary
 non-force worktree removal. Every other dirty or ignored lane, plus every
@@ -444,8 +447,11 @@ record before worktree removal. Nested ignored records such as
 untracked files, and other ignored paths remain removal blockers. The
 disposable build output is not restored if a later operation fails. Only after
 successful worktree removal does sync attempt ordinary local `git branch -d`
-through a task-owned proof ref. Proof creation and cleanup use compare-and-swap
-OIDs; missing, changed, reattached, or colliding state fails closed.
+through a task-owned proof ref. That `git branch -d` call injects
+`branch.<name>.merge=refs/heads/<name>` so stored tracking of the default
+branch does not block squash-merged exact-head deletion. Proof creation and
+cleanup use compare-and-swap OIDs; missing, changed, reattached, or colliding
+state fails closed.
 
 ## Scope Boundary
 
