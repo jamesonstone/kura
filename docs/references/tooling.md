@@ -19,6 +19,6 @@
   approximate reclaimed space for successfully removed worktrees, and only the
   failures appended during apply before returning nonzero. Automatic/JSON paths
   continue projecting the persisted typed report.
-- Bare sweep failure triage may retry or persist exact reviewed exclusions; it must not repair Git metadata, delete orphan directories, or infer repository identity. STALE unproven retirement is interactive-only, preserves local branches, rechecks status/process/registration, and never applies to protected/active rows or `--auto`.
+- Bare sweep failure triage may retry or persist exact reviewed exclusions; it must not repair Git metadata, delete orphan directories, or infer repository identity. STALE unproven retirement is interactive-only after 14 days, preserves local branches, skips work-in-progress and open PRs, rechecks status/process/registration, and never applies to protected/active rows or `--auto`.
 - Sweep configuration lifecycle is split across `sweep_config*.go`: strict typed loading, YAML-node comment preservation, line-diff review, TTY orchestration, typed path prompts, backup/atomic persistence, and platform-specific replacement remain independently testable.
 - GitHub pull requests run `.github/workflows/ci.yml`. Semantic `vMAJOR.MINOR.PATCH` tags publish macOS, Linux, and Windows archives plus checksums through `.github/workflows/release.yml`.

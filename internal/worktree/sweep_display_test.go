@@ -9,13 +9,22 @@ import (
 	"time"
 )
 
-func TestSweepStaleBoundaryUsesTwoCalendarMonths(t *testing.T) {
-	now := time.Date(2026, time.August, 24, 12, 0, 0, 0, time.UTC)
-	if sweepWorktreeIsStale(time.Date(2026, time.June, 24, 12, 0, 0, 0, time.UTC), now) {
-		t.Fatal("exactly two calendar months old must not be stale")
+func TestSweepStatusWorkInProgressIgnoresIgnoredOnly(t *testing.T) {
+	if (SweepStatus{Ignored: 1, Lines: []string{"!! bin/out"}}).WorkInProgress() {
+		t.Fatal("ignored-only status is not work in progress")
 	}
-	if !sweepWorktreeIsStale(time.Date(2026, time.June, 24, 11, 59, 59, 0, time.UTC), now) {
-		t.Fatal("older than two calendar months must be stale")
+	if !(SweepStatus{Untracked: 1, Lines: []string{"?? local.txt"}}).WorkInProgress() {
+		t.Fatal("untracked status is work in progress")
+	}
+}
+
+func TestSweepStaleBoundaryUsesFourteenDays(t *testing.T) {
+	now := time.Date(2026, time.September, 7, 12, 0, 0, 0, time.UTC)
+	if sweepWorktreeIsStale(now.AddDate(0, 0, -sweepStaleAgeDays), now) {
+		t.Fatal("exactly 14 days old must not be stale")
+	}
+	if !sweepWorktreeIsStale(now.AddDate(0, 0, -sweepStaleAgeDays).Add(-time.Second), now) {
+		t.Fatal("older than 14 days must be stale")
 	}
 }
 

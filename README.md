@@ -103,11 +103,13 @@ remain blocked. STALE unproven worktrees preserve local branches as recovery
 refs and are never eligible for `--auto`.
 
 Grouped and selector output show each worktree's last commit date. A `STALE`
-annotation means that date is older than two calendar months. It enables only
-an interactive worktree-retirement path: exact local files are reviewed,
-process and registration evidence are rechecked, and an unproven local branch
-is preserved. Local-file lanes show a compact basename/path hint plus an
-overflow count, while exact confirmation lists every status entry.
+annotation means that date is older than 14 days. It enables only an
+interactive worktree-retirement path for unproven lanes without work in
+progress: exact local files are reviewed, process and registration evidence
+are rechecked, open PRs stay preserved, and an unproven local branch is kept
+so a remote branch can rebuild the lane. Local-file lanes show a compact
+basename/path hint plus an overflow count, while exact confirmation lists
+every status entry.
 
 For unattended maintenance:
 

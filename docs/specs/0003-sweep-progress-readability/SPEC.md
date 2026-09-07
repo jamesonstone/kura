@@ -78,7 +78,7 @@ existing proof or confirmation boundary.
 - REQ-005: Use `Merged + Local Files` terminology consistently in action menus
   and add the number of candidate worktrees each option would remove.
 - REQ-006: Display the last commit date in grouped and selector output. Mark a
-  candidate stale after two calendar months, using the report generation time.
+  candidate stale after 14 days, using the report generation time.
 - REQ-007: Age-based staleness is informational only and never changes state,
   selectability, automatic authority, or removal behavior.
 - REQ-008: Display a sanitized, bounded local-file summary in normal human and
@@ -94,8 +94,9 @@ existing proof or confirmation boundary.
   never contaminates JSON or non-terminal output.
 - AC-002: Tests prove multiple repositories share one GraphQL batch, duplicate
   identities share evidence, pagination is complete, and failures fail closed.
-- AC-003: Tests prove the two-calendar-month boundary and verify it has no
-  effect on selection or automatic removal authority.
+- AC-003: Tests prove the 14-day stale boundary. Interactive STALE retirement
+  authority is defined by later sweep features rather than this informational
+  annotation.
 - AC-004: Human and selector tests cover updated columns, stale annotations,
   compact sanitized local-file hints, consistent terminology, and menu counts.
 - AC-005: Focused tests, full checks, race tests, lint, release validation,

@@ -192,11 +192,15 @@ group falls back only far enough to isolate fail-closed repository results.
 Global authentication and rate-limit failures do not fan out into retries.
 
 The grouped report and selector include the last commit date. `STALE` means the
-date is older than two calendar months relative to report generation. It never
-changes automatic authority. An otherwise unproven stale worktree may gain
+date is older than 14 days relative to report generation. It never changes
+automatic authority. An otherwise unproven stale worktree may gain
 interactive-only retirement authority after local status and process
-inspection; primary, current, default, locked, or active targets remain
-protected. Its local branch is preserved as a recovery ref.
+inspection when GitHub evidence is a missing or closed-unmerged pull request
+and the tree has no work-in-progress files. Open PRs, GitHub-unavailable rows,
+and tracked, staged, untracked, or submodule files stay preserved. Primary,
+current, default, locked, or active targets remain protected. The local branch
+is preserved as a recovery ref so a published remote branch can rebuild the
+lane.
 
 `--auto` removes only `remove-ready` and stale metadata. It never forces,
 deletes local files or divergent commits, deletes a remote branch, fetches,
@@ -230,8 +234,9 @@ This is discovery triage, not filesystem or repository repair: it never deletes
 an orphan directory or rewrites GitHub identity. Use `[s] review STALE` to open
 the selector with only age-stale rows, or `[b] bulk-delete STALE` to preselect
 every eligible stale row for exact review. STALE unproven worktrees may be
-retired interactively while preserving local branches; protected/active rows
-remain blocked and `--auto` never gains this authority.
+retired interactively when they are older than 14 days, have no work in
+progress, and are not open PRs; local branches are preserved. Protected/active
+rows remain blocked and `--auto` never gains this authority.
 
 The counted action menu uses `Remove Ready` and `Merged + Local Files`
 terminology consistently with the report. The interactive selector uses arrows
