@@ -72,8 +72,10 @@ explicit bulk retirement of age-stale worktrees with recovery refs preserved.
 
 - REQ-001: After every confirmed interactive apply, print one compact
   `SWEEP COMPLETION` block whether apply succeeds, partially succeeds, or fails.
-- REQ-002: Show removed-worktree, pruned-metadata, and preserved/failed target
-  counts before returning nonzero.
+- REQ-002: Show removed-worktree counts with approximate reclaimed space from
+  discovery-time size measurements, pruned-metadata counts, and
+  preserved/failed target counts before returning nonzero. Reclaim totals
+  include only successfully removed worktrees.
 - REQ-003: Render every failure added during apply with its operation,
   repository/path identity, and exact sanitized error.
 - REQ-004: Do not repeat the full candidate report or failures already shown
@@ -118,8 +120,8 @@ explicit bulk retirement of age-stale worktrees with recovery refs preserved.
   and the independently preserved target failure before returning nonzero.
 - AC-003: Failure rendering sanitizes repository, path, operation, and error
   fields and remains readable without color.
-- AC-004: Successful interactive apply still prints completion counts and no
-  failure heading.
+- AC-004: Successful interactive apply still prints completion counts with
+  approximate reclaimed space and no failure heading.
 - AC-005: Existing JSON/human parity, persistence, cancellation, automatic
   application, and sweep safety tests remain green.
 - AC-006: Full checks, race tests, lint, release builds, security scans,
@@ -261,3 +263,6 @@ explicit bulk retirement of age-stale worktrees with recovery refs preserved.
   through PR #14 after semantic squash-base reconciliation.
 - 2026-08-24: Follow-up PR #14 completed hosted validation on the reconciled
   approved head.
+- 2026-09-07: Issue #20 / `GH-20` added approximate reclaimed space to
+  `SWEEP COMPLETION`. Totals use discovery-time sizes for successfully removed
+  worktrees only.

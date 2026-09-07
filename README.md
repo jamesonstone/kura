@@ -87,9 +87,10 @@ then refreshes process evidence once and immediately rechecks each target's
 exact registration, branch, head, and local-status fingerprint before removal.
 One drifted target is preserved without weakening independent safe targets.
 After apply, interactive sweep always prints a compact completion block. It
-reports removed, metadata-pruned, and preserved/failed counts, then lists each
-new apply failure with its operation, repository/path, and exact error before
-the command returns its aggregate nonzero status.
+reports removed worktrees with approximate reclaimed space, metadata-pruned
+counts, and preserved/failed counts, then lists each new apply failure with its
+operation, repository/path, and exact error before the command returns its
+aggregate nonzero status.
 
 The action menu offers `[f] address failures`: retry discovery/GitHub evidence
 immediately, or select exact retired paths to add to reviewed configuration

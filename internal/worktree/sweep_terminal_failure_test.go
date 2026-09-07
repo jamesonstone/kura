@@ -102,6 +102,32 @@ func TestSweepTerminalShowsSuccessfulCompletionWithoutFailures(t *testing.T) {
 	}
 }
 
+func TestWriteSweepCompletionReportsReclaimedSpace(t *testing.T) {
+	report := SweepReport{
+		Candidates: []SweepCandidate{
+			{ID: "one", SizeBytes: 200 * 1024 * 1024},
+			{ID: "two", SizeBytes: 50 * 1024 * 1024},
+			{ID: "meta", State: SweepStaleMetadata, SizeBytes: 9},
+			{ID: "kept", SizeBytes: 1024 * 1024 * 1024},
+		},
+		Actions: []SweepAction{
+			{CandidateID: "one", Action: "remove", Status: "removed"},
+			{CandidateID: "two", Action: "remove", Status: "removed"},
+			{CandidateID: "meta", Action: "remove", Status: "removed"},
+			{CandidateID: "kept", Action: "remove", Status: "preserved"},
+		},
+	}
+	var output bytes.Buffer
+	if err := writeSweepCompletion(&output, report, nil, false); err != nil {
+		t.Fatal(err)
+	}
+	got := output.String()
+	want := "Removed 2 worktree(s) (~250.0MB); pruned 1 metadata record(s); preserved/failed 1 target(s)."
+	if !strings.Contains(got, want) {
+		t.Fatalf("completion missing reclaim summary %q:\n%s", want, got)
+	}
+}
+
 func TestSweepCompletionSanitizesFailureFields(t *testing.T) {
 	report := SweepReport{
 		Candidates: []SweepCandidate{{ID: "one"}},
