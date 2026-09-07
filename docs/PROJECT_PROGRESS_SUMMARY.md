@@ -43,7 +43,7 @@ See `docs/CONSTITUTION.md` for project-wide constraints and principles.
 - **STATUS**: complete
 - **PAUSED**: no
 - **INTENT**: Make fleet sweep visibly active during slow operations, reduce GitHub API round-trips, and add compact age and local-file context without weakening removal authority.
-- **APPROACH**: 1. Animate a TTY-only stderr status line throughout long sweep phases. 2. Deduplicate GitHub evidence by repository identity and resolve default branches plus PR pages in bounded GraphQL batches. 3. Show two-calendar-month stale annotations, compact local-file hints, consistent terminology, and counted actions without changing authority. 4. Validate terminal, batch, rendering, safety, installation, and release contracts before ready-PR delivery.
+- **APPROACH**: 1. Animate a TTY-only stderr status line throughout long sweep phases. 2. Deduplicate GitHub evidence by repository identity and resolve default branches plus PR pages in bounded GraphQL batches. 3. Show 14-day stale annotations, compact local-file hints, consistent terminology, and counted actions. 4. Validate terminal, batch, rendering, safety, installation, and release contracts before ready-PR delivery.
 - **OPEN ITEMS**: none
 - **POINTERS**: `docs/specs/0003-sweep-progress-readability/SPEC.md`
 
@@ -65,6 +65,15 @@ See `docs/CONSTITUTION.md` for project-wide constraints and principles.
 - **OPEN ITEMS**: none
 - **POINTERS**: `docs/specs/0005-sweep-interactive-failures/SPEC.md`
 
+### sweep-stale-wip-guard
+
+- **STATUS**: complete
+- **PAUSED**: no
+- **INTENT**: Retire unused worktrees after 14 days without deleting work in progress.
+- **APPROACH**: 1. Shorten the STALE mark to 14 days. 2. Allow interactive unproven retirement only for missing or closed-unmerged PR evidence. 3. Preserve tracked, staged, untracked, submodule, open-PR, and protected rows. 4. Keep local branches and refuse `--auto` STALE authority.
+- **OPEN ITEMS**: none
+- **POINTERS**: `docs/specs/0006-sweep-stale-wip-guard/SPEC.md`
+
 ## LAST UPDATED
 
-2026-08-24 15:55:19 EDT
+2026-09-07 11:55:00 EDT

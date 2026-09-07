@@ -77,6 +77,10 @@ func (status SweepStatus) Dirty() bool {
 	return len(status.Lines) != 0
 }
 
+func (status SweepStatus) WorkInProgress() bool {
+	return status.Tracked > 0 || status.Staged > 0 || status.Untracked > 0 || status.Submodules > 0
+}
+
 type SweepCandidate struct {
 	ID              string               `json:"id"`
 	Repository      string               `json:"repository"`

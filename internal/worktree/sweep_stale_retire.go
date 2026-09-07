@@ -11,7 +11,7 @@ func (a *App) prepareStaleRetirableCandidate(
 	target sweepRepository,
 	candidate *SweepCandidate,
 ) {
-	if !candidate.Stale || candidate.State != SweepUnproven {
+	if !candidate.Stale || candidate.State != SweepUnproven || !sweepUnprovenReasonRetirable(candidate.Reason) {
 		return
 	}
 	status, err := a.inspectSweepStatus(ctx, target.primary, candidate.Path)
@@ -29,6 +29,11 @@ func (a *App) prepareStaleRetirableCandidate(
 		candidate.Snapshot = sweepCandidateSnapshot(*candidate)
 		return
 	}
+	if status.WorkInProgress() {
+		candidate.Detail = appendSweepDetail(candidate.Detail, "STALE work in progress preserved")
+		candidate.Snapshot = sweepCandidateSnapshot(*candidate)
+		return
+	}
 	candidate.StaleRetirable = true
 	candidate.Selectable = true
 	candidate.AutoRemovable = false
@@ -39,6 +44,15 @@ func (a *App) prepareStaleRetirableCandidate(
 		fmt.Sprintf("STALE interactive retirement; local branch preserved; %s", sweepStatusDetail(status)),
 	)
 	candidate.Snapshot = sweepCandidateSnapshot(*candidate)
+}
+
+func sweepUnprovenReasonRetirable(reason string) bool {
+	switch reason {
+	case "pull-request-missing", "pull-request-not-merged":
+		return true
+	default:
+		return false
+	}
 }
 
 func appendSweepDetail(existing, addition string) string {

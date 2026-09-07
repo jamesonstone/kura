@@ -101,7 +101,9 @@ explicit bulk retirement of age-stale worktrees with recovery refs preserved.
   bulk-delete STALE` to preselect every eligible stale worktree for the same
   exact review and confirmation.
 - REQ-014: An age-stale `UNPROVEN / NOT MERGED` worktree may become
-  interactive-only retirable after exact status and process inspection.
+  interactive-only retirable after exact status and process inspection when
+  GitHub evidence is a missing or closed-unmerged pull request and the tree
+  has no work-in-progress files.
 - REQ-015: Primary, current, default-branch, locked, or positively active stale
   worktrees remain blocked. Stale retirement never gains automatic authority.
 - REQ-016: Immediately revalidate registration, branch, head, process state,
@@ -130,9 +132,9 @@ explicit bulk retirement of age-stale worktrees with recovery refs preserved.
   terminal action loop, clearing a resolved failure.
 - AC-008: Tests prove confirmed exact-path exclusions are persisted and broad
   home/root exclusions are refused.
-- AC-009: Tests prove review/bulk STALE counts, multi-Space selection, dirty
-  stale-unproven retirement, active-process blocking, and local-branch
-  preservation.
+- AC-009: Tests prove review/bulk STALE counts, multi-Space selection, clean
+  stale-unproven retirement with local-branch preservation, work-in-progress
+  and open-PR blocking, and active-process blocking.
 
 ## ACCEPTED PLAN
 
@@ -263,6 +265,5 @@ explicit bulk retirement of age-stale worktrees with recovery refs preserved.
   through PR #14 after semantic squash-base reconciliation.
 - 2026-08-24: Follow-up PR #14 completed hosted validation on the reconciled
   approved head.
-- 2026-09-07: Issue #20 / `GH-20` added approximate reclaimed space to
-  `SWEEP COMPLETION`. Totals use discovery-time sizes for successfully removed
-  worktrees only.
+- 2026-09-07: Issue #22 / `GH-22` shortened STALE to 14 days and refused
+  work-in-progress and open-PR retirement. See `0006-sweep-stale-wip-guard`.

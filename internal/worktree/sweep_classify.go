@@ -182,8 +182,10 @@ func populateSweepUpdated(ctx context.Context, app *App, cwd string, candidate *
 	}
 }
 
+const sweepStaleAgeDays = 14
+
 func sweepWorktreeIsStale(updated, now time.Time) bool {
-	return updated.Before(now.AddDate(0, -2, 0))
+	return updated.Before(now.AddDate(0, 0, -sweepStaleAgeDays))
 }
 
 func sweepCandidateID(candidate SweepCandidate) string {
