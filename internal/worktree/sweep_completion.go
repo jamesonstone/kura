@@ -15,11 +15,12 @@ func writeSweepCompletion(
 	if _, err := fmt.Fprintln(writer, sweepColorize("\nSWEEP COMPLETION", colorBold, color)); err != nil {
 		return err
 	}
-	removed, pruned, preserved := summarizeSweepActions(report)
+	removed, pruned, preserved, reclaimed := summarizeSweepActions(report)
 	if _, err := fmt.Fprintf(
 		writer,
-		"Removed %d worktree(s); pruned %d metadata record(s); preserved/failed %d target(s).\n",
+		"Removed %d worktree(s) (~%s); pruned %d metadata record(s); preserved/failed %d target(s).\n",
 		removed,
+		humanSweepBytes(reclaimed),
 		pruned,
 		preserved,
 	); err != nil {

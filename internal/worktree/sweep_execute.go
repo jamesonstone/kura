@@ -240,9 +240,11 @@ func recordSweepAction(report *SweepReport, candidate SweepCandidate, status str
 	report.Actions = append(report.Actions, action)
 }
 
-func summarizeSweepActions(report SweepReport) (removed, pruned, preserved int) {
+func summarizeSweepActions(report SweepReport) (removed, pruned, preserved int, reclaimed int64) {
+	candidates := make(map[string]SweepCandidate, len(report.Candidates))
 	metadata := make(map[string]bool)
 	for _, candidate := range report.Candidates {
+		candidates[candidate.ID] = candidate
 		if candidate.State == SweepStaleMetadata {
 			metadata[candidate.ID] = true
 		}
@@ -254,9 +256,10 @@ func summarizeSweepActions(report SweepReport) (removed, pruned, preserved int) 
 		}
 		if metadata[action.CandidateID] {
 			pruned++
-		} else {
-			removed++
+			continue
 		}
+		removed++
+		reclaimed += candidates[action.CandidateID].SizeBytes
 	}
-	return removed, pruned, preserved
+	return removed, pruned, preserved, reclaimed
 }

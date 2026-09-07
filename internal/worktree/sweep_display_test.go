@@ -57,15 +57,19 @@ func TestSweepMenuUsesStateTerminologyAndCounts(t *testing.T) {
 
 func TestSummarizeSweepActionsSeparatesWorktreesAndMetadata(t *testing.T) {
 	report := SweepReport{
-		Candidates: []SweepCandidate{{ID: "worktree"}, {ID: "metadata", State: SweepStaleMetadata}},
+		Candidates: []SweepCandidate{
+			{ID: "worktree", SizeBytes: 2 * 1024 * 1024},
+			{ID: "metadata", State: SweepStaleMetadata, SizeBytes: 999},
+			{ID: "failed", SizeBytes: 8 * 1024 * 1024},
+		},
 		Actions: []SweepAction{
 			{CandidateID: "worktree", Action: "remove", Status: "removed"},
 			{CandidateID: "metadata", Action: "remove", Status: "removed"},
 			{CandidateID: "failed", Action: "remove", Status: "preserved"},
 		},
 	}
-	removed, pruned, preserved := summarizeSweepActions(report)
-	if removed != 1 || pruned != 1 || preserved != 1 {
-		t.Fatalf("summary = %d %d %d", removed, pruned, preserved)
+	removed, pruned, preserved, reclaimed := summarizeSweepActions(report)
+	if removed != 1 || pruned != 1 || preserved != 1 || reclaimed != 2*1024*1024 {
+		t.Fatalf("summary = %d %d %d %d", removed, pruned, preserved, reclaimed)
 	}
 }

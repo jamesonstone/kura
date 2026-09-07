@@ -215,10 +215,14 @@ status fingerprint. Missing or drifted targets are preserved independently;
 fleet discovery and GitHub evidence are never repeated once per selection.
 
 Every confirmed interactive apply ends with `SWEEP COMPLETION`. The block shows
-removed worktrees, pruned metadata, and preserved/failed targets. Apply failures
-then identify the exact operation, repository/path, and sanitized error before
-the terse aggregate nonzero command error. Discovery and GitHub failures already
-shown before selection are not repeated in this completion block.
+removed worktrees with approximate reclaimed space from discovery-time size
+measurements, pruned metadata, and preserved/failed targets. Reclaim totals
+include only successfully removed worktrees; metadata prunes and failed or
+preserved targets are excluded, and apply does not re-walk directories.
+Apply failures then identify the exact operation, repository/path, and
+sanitized error before the terse aggregate nonzero command error. Discovery and
+GitHub failures already shown before selection are not repeated in this
+completion block.
 
 Use `[f] address failures` to retry the read-only report or add selected exact
 retired paths to sweep exclusions through a full YAML diff and confirmation.
