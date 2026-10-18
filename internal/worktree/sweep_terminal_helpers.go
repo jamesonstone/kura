@@ -105,6 +105,9 @@ func defaultSweepRemovalCandidates(candidates []SweepCandidate, only SweepState)
 		seen[key] = true
 	}
 	for _, candidate := range bulkStaleSweepCandidates(candidates, only) {
+		if candidate.State != SweepUnproven {
+			continue
+		}
 		key := sweepSelectionKey(candidate)
 		if seen[key] {
 			continue

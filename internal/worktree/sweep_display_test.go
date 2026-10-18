@@ -101,6 +101,7 @@ func TestDefaultSweepRemovalCandidatesHonorOnly(t *testing.T) {
 		{ID: "ready", State: SweepRemoveReady, Selectable: true},
 		{ID: "files", State: SweepMergedLocalFiles, Selectable: true},
 		{ID: "unproven", State: SweepUnproven, Stale: true, StaleRetirable: true, Selectable: true},
+		{ID: "commits", State: SweepMergedLocalCommits, Stale: true, Selectable: true},
 	}
 	got := defaultSweepRemovalCandidates(candidates, SweepMergedLocalFiles)
 	if len(got) != 1 || got[0].ID != "files" {
@@ -109,6 +110,10 @@ func TestDefaultSweepRemovalCandidatesHonorOnly(t *testing.T) {
 	got = defaultSweepRemovalCandidates(candidates, SweepUnproven)
 	if len(got) != 1 || got[0].ID != "unproven" {
 		t.Fatalf("only unproven stale = %#v", got)
+	}
+	got = defaultSweepRemovalCandidates(candidates, "")
+	if len(got) != 3 || got[0].ID != "ready" || got[1].ID != "files" || got[2].ID != "unproven" {
+		t.Fatalf("default removal leaked merged-local-commits: %#v", got)
 	}
 }
 

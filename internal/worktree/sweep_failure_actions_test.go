@@ -122,7 +122,7 @@ func TestSweepMenuBulkSelectsEveryEligibleStaleWorktree(t *testing.T) {
 		{ID: "unproven", Path: "/tmp/unproven", State: SweepUnproven, Stale: true, StaleRetirable: true, Selectable: true},
 		{ID: "protected", Path: "/tmp/protected", State: SweepProtectedActive, Stale: true},
 		{ID: "recent", Path: "/tmp/recent", State: SweepRemoveReady, Selectable: true},
-		{ID: "commits", Path: "/tmp/commits", State: SweepMergedLocalCommits, Selectable: true},
+		{ID: "commits", Path: "/tmp/commits", State: SweepMergedLocalCommits, Stale: true, Selectable: true},
 	}
 	report := SweepReport{Candidates: candidates}
 	var output bytes.Buffer
