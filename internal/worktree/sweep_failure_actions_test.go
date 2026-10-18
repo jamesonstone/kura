@@ -97,12 +97,17 @@ func TestSweepMenuShowsFailureAndStaleActions(t *testing.T) {
 		t.Fatalf("selected=%#v retry=%t err=%v", selected, retry, err)
 	}
 	for _, expected := range []string{
-		"[s] review STALE (2 total, 1 selectable)",
-		"[b] bulk-delete STALE (1; exact review required)",
+		"[r] remove ready + Merged + Local Files + STALE (2 WT)",
+		"[i] selector (2 WT)",
 		"[f] address failures (1)",
 	} {
 		if !strings.Contains(output.String(), expected) {
 			t.Fatalf("menu missing %q:\n%s", expected, output.String())
+		}
+	}
+	for _, unexpected := range []string{"[s] ", "[b] ", "[l] ", "[m] "} {
+		if strings.Contains(output.String(), unexpected) {
+			t.Fatalf("menu retained %q:\n%s", unexpected, output.String())
 		}
 	}
 	stale := staleSweepCandidates(candidates, "")
@@ -117,22 +122,23 @@ func TestSweepMenuBulkSelectsEveryEligibleStaleWorktree(t *testing.T) {
 		{ID: "unproven", Path: "/tmp/unproven", State: SweepUnproven, Stale: true, StaleRetirable: true, Selectable: true},
 		{ID: "protected", Path: "/tmp/protected", State: SweepProtectedActive, Stale: true},
 		{ID: "recent", Path: "/tmp/recent", State: SweepRemoveReady, Selectable: true},
+		{ID: "commits", Path: "/tmp/commits", State: SweepMergedLocalCommits, Stale: true, Selectable: true},
 	}
 	report := SweepReport{Candidates: candidates}
 	var output bytes.Buffer
 	app := NewApp(&output, &output)
 	selected, retry, err := app.chooseSweepMenu(
-		context.Background(), bufio.NewReader(strings.NewReader("b\n")),
+		context.Background(), bufio.NewReader(strings.NewReader("r\n")),
 		&report, SweepConfig{}, SweepOptions{},
 	)
-	if err != nil || retry || len(selected) != 2 {
+	if err != nil || retry || len(selected) != 3 {
 		t.Fatalf("selected=%#v retry=%t err=%v", selected, retry, err)
 	}
-	if selected[0].ID != "ready" || selected[1].ID != "unproven" {
-		t.Fatalf("bulk selection = %#v", selected)
+	if selected[0].ID != "ready" || selected[1].ID != "recent" || selected[2].ID != "unproven" {
+		t.Fatalf("combined selection = %#v", selected)
 	}
-	if !strings.Contains(output.String(), "[i] selector (3 WT)") {
-		t.Fatalf("selector count omitted STALE unproven target:\n%s", output.String())
+	if !strings.Contains(output.String(), "[i] selector (4 WT)") {
+		t.Fatalf("selector count omitted STALE unproven or merged commits:\n%s", output.String())
 	}
 }
 

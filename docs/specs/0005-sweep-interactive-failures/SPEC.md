@@ -97,9 +97,9 @@ explicit bulk retirement of age-stale worktrees with recovery refs preserved.
 - REQ-012: Refuse empty, relative, filesystem-root, or home-root failure
   exclusions. Never delete an orphan directory, prune metadata manually, or
   rewrite Git/GitHub repository identity from this workflow.
-- REQ-013: Add `[s] review STALE` with total/selectable counts and `[b]
-  bulk-delete STALE` to preselect every eligible stale worktree for the same
-  exact review and confirmation.
+- REQ-013: Bare `[r]` preselects remove-ready, merged+local-files, stale
+  metadata, and selectable STALE unproven worktrees for the same exact review
+  and confirmation. `[i]` remains the selector escape hatch.
 - REQ-014: An age-stale `UNPROVEN / NOT MERGED` worktree may become
   interactive-only retirable after exact status and process inspection when
   GitHub evidence is a missing or closed-unmerged pull request and the tree
@@ -132,9 +132,10 @@ explicit bulk retirement of age-stale worktrees with recovery refs preserved.
   terminal action loop, clearing a resolved failure.
 - AC-008: Tests prove confirmed exact-path exclusions are persisted and broad
   home/root exclusions are refused.
-- AC-009: Tests prove review/bulk STALE counts, multi-Space selection, clean
-  stale-unproven retirement with local-branch preservation, work-in-progress
-  and open-PR blocking, and active-process blocking.
+- AC-009: Tests prove combined `[r]` bulk-preselection, selector escape-hatch
+  counts, multi-Space selection, clean stale-unproven retirement with
+  local-branch preservation, work-in-progress and open-PR blocking, and
+  active-process blocking.
 
 ## ACCEPTED PLAN
 

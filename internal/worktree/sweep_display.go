@@ -94,7 +94,11 @@ func compactSweepFilePath(path string, width int) string {
 }
 
 func sweepMenuCounts(candidates []SweepCandidate, states ...SweepState) (worktrees, metadata int) {
-	for _, candidate := range selectSweepStates(candidates, states...) {
+	return sweepCandidateMenuCounts(selectSweepStates(candidates, states...))
+}
+
+func sweepCandidateMenuCounts(candidates []SweepCandidate) (worktrees, metadata int) {
+	for _, candidate := range candidates {
 		if candidate.State == SweepStaleMetadata {
 			metadata++
 		} else {

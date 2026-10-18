@@ -93,6 +93,31 @@ func selectSweepStates(candidates []SweepCandidate, states ...SweepState) []Swee
 	return result
 }
 
+func defaultSweepRemovalCandidates(candidates []SweepCandidate, only SweepState) []SweepCandidate {
+	result := make([]SweepCandidate, 0)
+	seen := make(map[string]bool)
+	for _, candidate := range selectSweepStates(candidates, SweepRemoveReady, SweepMergedLocalFiles, SweepStaleMetadata) {
+		if only != "" && candidate.State != only {
+			continue
+		}
+		key := sweepSelectionKey(candidate)
+		result = append(result, candidate)
+		seen[key] = true
+	}
+	for _, candidate := range bulkStaleSweepCandidates(candidates, only) {
+		if candidate.State != SweepUnproven {
+			continue
+		}
+		key := sweepSelectionKey(candidate)
+		if seen[key] {
+			continue
+		}
+		result = append(result, candidate)
+		seen[key] = true
+	}
+	return result
+}
+
 func selectedSweepCandidates(candidates []SweepCandidate, selected sweepSelection) []SweepCandidate {
 	result := make([]SweepCandidate, 0, len(selected))
 	for _, candidate := range candidates {
