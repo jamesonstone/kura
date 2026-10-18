@@ -54,13 +54,61 @@ func TestSweepMenuUsesStateTerminologyAndCounts(t *testing.T) {
 	var output bytes.Buffer
 	app := NewApp(&output, &output)
 	report := SweepReport{Candidates: candidates}
-	selected, retry, err := app.chooseSweepMenu(context.Background(), bufio.NewReader(strings.NewReader("l\n")), &report, SweepConfig{}, SweepOptions{})
+	selected, retry, err := app.chooseSweepMenu(context.Background(), bufio.NewReader(strings.NewReader("r\n")), &report, SweepConfig{}, SweepOptions{})
 	if err != nil || retry || len(selected) != 3 {
 		t.Fatalf("selected=%#v retry=%t err=%v", selected, retry, err)
 	}
+	if selected[0].ID != "ready" || selected[1].ID != "files" || selected[2].ID != "metadata" {
+		t.Fatalf("combined selection = %#v", selected)
+	}
 	prompt := output.String()
-	if strings.Contains(strings.ToLower(prompt), "dirty") || !strings.Contains(prompt, "Merged + Local Files") || !strings.Contains(prompt, "2 WT + 1 metadata") {
+	if strings.Contains(strings.ToLower(prompt), "dirty") ||
+		!strings.Contains(prompt, "[r] remove ready + Merged + Local Files + STALE (2 WT + 1 metadata)") ||
+		strings.Contains(prompt, "[l] ") || strings.Contains(prompt, "[s] ") ||
+		strings.Contains(prompt, "[b] ") || strings.Contains(prompt, "[m] ") {
 		t.Fatalf("prompt = %q", prompt)
+	}
+}
+
+func TestSweepMenuRejectsRetiredKeysAndEmptyRemoval(t *testing.T) {
+	candidates := []SweepCandidate{
+		{ID: "commits", State: SweepMergedLocalCommits, Selectable: true},
+	}
+	var output bytes.Buffer
+	app := NewApp(&output, &output)
+	report := SweepReport{Candidates: candidates}
+	selected, retry, err := app.chooseSweepMenu(
+		context.Background(),
+		bufio.NewReader(strings.NewReader("l\ns\nb\nm\nr\nq\n")),
+		&report,
+		SweepConfig{},
+		SweepOptions{},
+	)
+	if err != nil || retry || len(selected) != 0 {
+		t.Fatalf("selected=%#v retry=%t err=%v", selected, retry, err)
+	}
+	prompt := output.String()
+	if strings.Count(prompt, "Choose r, i, f, or q.") != 4 {
+		t.Fatalf("retired-key help count mismatch:\n%s", prompt)
+	}
+	if !strings.Contains(prompt, "No eligible worktrees to remove.") {
+		t.Fatalf("empty [r] did not continue:\n%s", prompt)
+	}
+}
+
+func TestDefaultSweepRemovalCandidatesHonorOnly(t *testing.T) {
+	candidates := []SweepCandidate{
+		{ID: "ready", State: SweepRemoveReady, Selectable: true},
+		{ID: "files", State: SweepMergedLocalFiles, Selectable: true},
+		{ID: "unproven", State: SweepUnproven, Stale: true, StaleRetirable: true, Selectable: true},
+	}
+	got := defaultSweepRemovalCandidates(candidates, SweepMergedLocalFiles)
+	if len(got) != 1 || got[0].ID != "files" {
+		t.Fatalf("only merged-local-files = %#v", got)
+	}
+	got = defaultSweepRemovalCandidates(candidates, SweepUnproven)
+	if len(got) != 1 || got[0].ID != "unproven" {
+		t.Fatalf("only unproven stale = %#v", got)
 	}
 }
 

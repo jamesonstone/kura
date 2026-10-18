@@ -231,12 +231,14 @@ completion block.
 Use `[f] address failures` to retry the read-only report or add selected exact
 retired paths to sweep exclusions through a full YAML diff and confirmation.
 This is discovery triage, not filesystem or repository repair: it never deletes
-an orphan directory or rewrites GitHub identity. Use `[s] review STALE` to open
-the selector with only age-stale rows, or `[b] bulk-delete STALE` to preselect
-every eligible stale row for exact review. STALE unproven worktrees may be
-retired interactively when they are older than 14 days, have no work in
-progress, and are not open PRs; local branches are preserved. Protected/active
-rows remain blocked and `--auto` never gains this authority.
+an orphan directory or rewrites GitHub identity. Bare `[r]` preselects
+remove-ready, merged+local-files, stale metadata, and selectable STALE unproven
+lanes, then uses the same exact-removal confirmation. `[i]` is the hand-pick
+escape and is the only menu path that includes merged+local-commits. STALE
+unproven worktrees may be retired interactively when they are older than 14
+days, have no work in progress, and are not open PRs; local branches are
+preserved. Protected/active rows remain blocked and `--auto` never gains this
+authority.
 
 The counted action menu uses `Remove Ready` and `Merged + Local Files`
 terminology consistently with the report. The interactive selector uses arrows

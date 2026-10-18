@@ -91,22 +91,15 @@ func (a *App) chooseSweepMenu(
 	options SweepOptions,
 ) ([]SweepCandidate, bool, error) {
 	candidates := report.Candidates
-	readyWT, readyMetadata := sweepMenuCounts(candidates, SweepRemoveReady, SweepStaleMetadata)
-	localWT, localMetadata := sweepMenuCounts(candidates, SweepRemoveReady, SweepMergedLocalFiles, SweepStaleMetadata)
-	mergedWT, _ := sweepMenuCounts(candidates, SweepRemoveReady, SweepMergedLocalFiles, SweepMergedLocalCommits)
-	selectableWT, selectableMetadata := sweepMenuCounts(candidates, SweepRemoveReady, SweepMergedLocalFiles, SweepMergedLocalCommits, SweepUnproven, SweepStaleMetadata)
-	stale := staleSweepCandidates(candidates, options.Only)
-	staleSelectable := countSelectableSweepCandidates(stale)
-	bulkStale := bulkStaleSweepCandidates(candidates, options.Only)
+	removal := defaultSweepRemovalCandidates(candidates, options.Only)
+	removeWT, removeMetadata := sweepCandidateMenuCounts(removal)
+	selectableWT, selectableMetadata := sweepMenuCounts(
+		candidates, SweepRemoveReady, SweepMergedLocalFiles, SweepMergedLocalCommits, SweepUnproven, SweepStaleMetadata,
+	)
 	for {
 		prompt := fmt.Sprintf(
-			"Actions:\n  [r] remove ready (%s)\n  [l] remove ready + Merged + Local Files (%s)\n  [s] review STALE (%d total, %d selectable)\n  [b] bulk-delete STALE (%d; exact review required)\n  [m] review merged (%d WT)\n  [i] selector (%s)\n  [f] address failures (%d)\n  [q] quit\nChoice: ",
-			sweepMenuCountLabel(readyWT, readyMetadata),
-			sweepMenuCountLabel(localWT, localMetadata),
-			len(stale),
-			staleSelectable,
-			len(bulkStale),
-			mergedWT,
+			"Actions:\n  [r] remove ready + Merged + Local Files + STALE (%s)\n  [i] selector (%s)\n  [f] address failures (%d)\n  [q] quit\nChoice: ",
+			sweepMenuCountLabel(removeWT, removeMetadata),
 			sweepMenuCountLabel(selectableWT, selectableMetadata),
 			len(report.Failures),
 		)
@@ -119,23 +112,12 @@ func (a *App) chooseSweepMenu(
 		}
 		switch strings.ToLower(strings.TrimSpace(choice)) {
 		case "r":
-			return selectSweepStates(candidates, SweepRemoveReady, SweepStaleMetadata), false, nil
-		case "d", "l":
-			return selectSweepStates(candidates, SweepRemoveReady, SweepMergedLocalFiles, SweepStaleMetadata), false, nil
-		case "s":
-			if len(stale) == 0 {
-				_, _ = fmt.Fprintln(a.out, "No STALE worktrees match the current filter.")
+			if len(removal) == 0 {
+				_, _ = fmt.Fprintln(a.out, "No eligible worktrees to remove.")
 				continue
 			}
-			selected, err := a.selectSweepTerminal(ctx, stale, options)
-			return selected, false, err
-		case "b":
-			if len(bulkStale) == 0 {
-				_, _ = fmt.Fprintln(a.out, "No selectable STALE worktrees match the current filter.")
-				continue
-			}
-			return bulkStale, false, nil
-		case "m", "i":
+			return removal, false, nil
+		case "i":
 			selected, err := a.selectSweepTerminal(ctx, candidates, options)
 			return selected, false, err
 		case "f":
@@ -146,7 +128,7 @@ func (a *App) chooseSweepMenu(
 		case "", "q":
 			return nil, false, nil
 		default:
-			_, _ = fmt.Fprintln(a.out, "Choose r, l, s, b, m, i, f, or q.")
+			_, _ = fmt.Fprintln(a.out, "Choose r, i, f, or q.")
 		}
 	}
 }

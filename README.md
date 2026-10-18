@@ -92,15 +92,15 @@ counts, and preserved/failed counts, then lists each new apply failure with its
 operation, repository/path, and exact error before the command returns its
 aggregate nonzero status.
 
-The action menu offers `[f] address failures`: retry discovery/GitHub evidence
-immediately, or select exact retired paths to add to reviewed configuration
-exclusions. Exclusion writes retain the normal diff, confirmation, backup, and
-atomic persistence contract; this workflow never deletes orphaned contents or
-guesses repository identity. `[s] review STALE` opens a stale-only selector;
-`[b] bulk-delete STALE` preselects every eligible stale worktree for exact
-review and confirmation. Primary, current, default, locked, or active rows
-remain blocked. STALE unproven worktrees preserve local branches as recovery
-refs and are never eligible for `--auto`.
+The action menu offers `[r] remove ready + Merged + Local Files + STALE` as
+the default bulk path, then exact confirmation. `[i] selector` remains the
+hand-pick escape, including merged+local-commits. `[f] address failures`
+retries discovery/GitHub evidence or adds selected exact retired paths to
+reviewed configuration exclusions. Exclusion writes retain the normal diff,
+confirmation, backup, and atomic persistence contract; this workflow never
+deletes orphaned contents or guesses repository identity. Primary, current,
+default, locked, or active rows remain blocked. STALE unproven worktrees
+preserve local branches as recovery refs and are never eligible for `--auto`.
 
 Grouped and selector output show each worktree's last commit date. A `STALE`
 annotation means that date is older than 14 days. It enables only an

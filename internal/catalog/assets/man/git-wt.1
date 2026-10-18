@@ -62,10 +62,11 @@ approximate reclaimed space for successfully removed worktrees. New apply
 failures identify their operation, repository or path, and exact error before
 the command returns its aggregate nonzero status; failures shown before
 selection are not repeated.
-The bare action menu can retry failures or add explicitly selected exact paths
-to reviewed configuration exclusions. It never deletes orphan contents or
-rewrites repository identity. STALE review opens an age-filtered selector, and
-bulk STALE preselects every eligible row for exact confirmation. Age-stale unproven worktrees may be retired only interactively when they are
+The bare action menu offers one bulk-remove path for remove-ready, merged local
+files, and selectable STALE worktrees, plus a selector escape hatch. It can
+retry failures or add explicitly selected exact paths to reviewed configuration
+exclusions. It never deletes orphan contents or rewrites repository identity.
+Age-stale unproven worktrees may be retired only interactively when they are
 older than 14 days and have no work-in-progress files: local status, process
 evidence, registration, branch, and head are rechecked, and the local branch is
 preserved. Open PRs, GitHub-unavailable rows, and protected or active rows
